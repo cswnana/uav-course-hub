@@ -33,12 +33,13 @@
 <main id="app"><p style="color:#6B5E4E">清单加载中…</p></main>
 <footer>
   以后加互动页：编辑课程根目录 <code>hub-catalog.json</code>，在对应分组的 <code>items</code> 里加一条 <code>label / note / path</code>，刷新本页即可。<br>
-  路径相对课程根目录，勿用 file:// 双击 HTML。
+  路径相对本站根目录。课堂本机仍可用「打开课程互动.bat」。
 </footer>
 <script>
 (function () {
-  if (location.protocol !== "http:" || location.hostname !== "127.0.0.1") {
+  if (location.protocol === "file:") {
     document.getElementById("protoWarn").hidden = false;
+    document.getElementById("protoWarn").textContent = "请不要用资源管理器双击打开。课堂本机用「打开课程互动.bat」；学生端用超星里的在线网址。";
   }
   function render(data) {
     if (data.title) document.querySelector("header h1").textContent = data.title;
@@ -54,7 +55,7 @@
       (g.items || []).forEach(function (it) {
         var a = document.createElement("a");
         a.className = "card";
-        a.href = "/" + String(it.path || "").replace(/^\/+/, "");
+        a.href = String(it.path || "").replace(/^\/+/, "");
         a.target = "_blank";
         a.rel = "noopener";
         a.innerHTML = "<strong></strong><span></span>";
@@ -66,7 +67,7 @@
       app.appendChild(sec);
     });
   }
-  fetch("/hub-catalog.json", { cache: "no-store" })
+  fetch("hub-catalog.json", { cache: "no-store" })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(render)
     .catch(function (e) {
