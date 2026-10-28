@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>固定翼的结构与特点 · 三维互动</title>
+<style>
+:root{
+  --bg:#0b1220; --panel:#121a2b; --panel2:#182338; --line:#2a3a55;
+  --text:#e8eef8; --muted:#93a4c3; --accent:#3db8ff; --accent2:#ffb020;
+  --ok:#3dd68c; --hot:#ff4d6d; --chip:#1e2d48;
+  --shadow:0 10px 40px rgba(0,0,0,.45);
+  --radius:14px; --font:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+body{display:flex;flex-direction:column;min-height:100vh}
+button{font:inherit;cursor:pointer}
+.topbar{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:12px 18px;background:linear-gradient(180deg,#152038,#0f1728);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;
+}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:220px}
+.brand h1{margin:0;font-size:20px;letter-spacing:.5px}
+.brand .sub{color:var(--muted);font-size:12px}
+.path{display:flex;gap:8px;flex:1;flex-wrap:wrap;align-items:center}
+.path .step{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;
+  background:var(--chip);border:1px solid transparent;color:var(--muted);
+}
+.path .step.active{border-color:var(--accent);color:var(--text);background:#1a3358}
+.path .step.done{border-color:rgba(61,214,140,.45);color:#b7f5d4}
+.path .num{
+  width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+  background:#243552;font-size:12px;font-weight:700;
+}
+.path .step.active .num{background:var(--accent);color:#041018}
+.path .step.done .num{background:var(--ok);color:#041018}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tools button,.sidebtn{
+  background:var(--chip);border:1px solid var(--line);color:var(--text);
+  padding:8px 12px;border-radius:10px;
+}
+.tools button:hover,.sidebtn:hover{border-color:var(--accent)}
+.tools button.on{border-color:var(--accent2);color:var(--accent2);background:#2a2210}
+.main{flex:1;display:grid;grid-template-columns:1fr 380px;gap:14px;padding:14px;min-height:0}
+@media (max-width:1100px){
+  body{display:block}
+  .topbar{position:relative}
+  .main{display:flex;flex-direction:column;min-height:0}
+  .stage-wrap{flex:none;height:auto;min-height:0}
+  .stage{flex:none;height:520px;min-height:520px}
+  .side{flex:none;min-height:620px}
+}
+@media (max-width:600px){
+  .topbar{padding:12px;gap:10px}
+  .brand{min-width:0;width:100%}
+  .brand h1{font-size:18px;letter-spacing:0}
+  .path{order:2;width:100%;flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .path .step{justify-content:center;text-align:center;border-radius:8px;padding:7px 5px;font-size:12px;line-height:1.35}
+  .path .num{display:none}
+  .tools{order:3;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .tools button,.tools .sidebtn{text-align:center;padding:8px 6px;font-size:13px}
+  .main{padding:10px;gap:10px}
+  .stage-wrap{height:auto;min-height:0}
+  .ac-tabs button{font-size:13px;padding:10px 5px}
+  .ac-tabs button .tag{font-size:10px}
+  .stage-meta{padding:8px;gap:6px}
+  .stage-meta .badge:nth-child(2){display:none}
+  .badge{font-size:11px;padding:4px 7px}
+  .stage{flex:none;height:460px;min-height:460px}
+  .legend{gap:8px;font-size:11px;padding:8px 10px}
+  .side{min-height:590px}
+}
+.stage-wrap{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:0;overflow:hidden;
+}
+.ac-tabs{display:flex;gap:0;border-bottom:1px solid var(--line);background:#0e1628}
+.ac-tabs button{
+  flex:1;padding:12px 8px;background:transparent;border:0;border-bottom:3px solid transparent;
+  color:var(--muted);font-weight:600;
+}
+.ac-tabs button.active{color:var(--text);border-bottom-color:var(--accent);background:rgba(61,184,255,.08)}
+.ac-tabs button .tag{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:2px}
+.hint-banner{
+  margin:0;padding:10px 14px;background:#1a2438;border-bottom:1px solid var(--line);
+  color:#c5d3ef;font-size:13px;line-height:1.55;
+}
+.hint-banner em{color:var(--accent2);font-style:normal;font-weight:700}
+.stage-meta{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel2);
+}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+  background:#1a2740;border:1px solid var(--line);font-size:12px;color:var(--muted);
+}
+.badge strong{color:var(--accent2)}
+.badge.cal{border-color:rgba(255,176,32,.55);color:var(--accent2)}
+.view-tools{display:flex;gap:6px;flex-wrap:wrap}
+.view-tools button{
+  background:#152033;border:1px solid var(--line);color:var(--muted);
+  padding:5px 10px;border-radius:8px;font-size:12px;
+}
+.view-tools button.on,.view-tools button.active{border-color:var(--accent);color:var(--text)}
+.stage{
+  position:relative;flex:1;min-height:460px;background:#dce4e8;overflow:hidden;
+}
+#c3d{display:block;width:100%;height:100%}
+.hot-overlay{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hot3d{
+  position:absolute;width:26px;height:26px;margin-left:-13px;margin-top:-13px;
+  border-radius:50%;border:2px solid #fff;background:rgba(255,77,109,.88);
+  box-shadow:0 0 0 4px rgba(255,77,109,.25);pointer-events:auto;cursor:pointer;
+  display:grid;place-items:center;color:#fff;font-size:11px;font-weight:800;
+  transform:translateZ(0);
+}
+.hot3d:hover,.hot3d.active{background:var(--accent);transform:scale(1.12)}
+.hot3d.done{background:rgba(61,214,140,.9)}
+.hot3d .tip{
+  position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);
+  white-space:nowrap;background:rgba(8,14,26,.92);border:1px solid var(--line);
+  padding:3px 7px;border-radius:6px;font-size:11px;opacity:0;pointer-events:none;
+}
+.hot3d:hover .tip,.hot3d.active .tip,.stage.calibrating .hot3d .tip{opacity:1}
+.coord-live{
+  position:absolute;left:50%;top:-28px;transform:translateX(-50%);
+  background:rgba(8,14,26,.92);border:1px solid var(--accent2);color:var(--accent2);
+  font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;white-space:nowrap;
+}
+.stage.calibrating{cursor:crosshair}
+.stage.calibrating .hot3d{cursor:grab;border-color:var(--accent2)}
+.legend{
+  padding:8px 14px 10px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;
+  color:var(--muted);font-size:12px;border-top:1px solid var(--line);
+}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+.legend .a{background:var(--hot)}.legend .b{background:var(--accent)}.legend .c{background:var(--ok)}
+.cal-bar{
+  display:none;gap:8px;flex-wrap:wrap;align-items:center;
+  padding:8px 14px;border-top:1px solid var(--line);background:#141c2e;
+  font-size:12px;color:var(--muted);
+}
+.cal-bar.show{display:flex}
+.cal-bar button{background:#152033;border:1px solid var(--line);color:var(--text);
+  padding:5px 10px;border-radius:8px;font-size:12px}
+.side{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:0;overflow:hidden;
+}
+.side-head{padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel2)}
+.side-head h2{margin:0 0 4px;font-size:16px}
+.side-head p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+.current{margin:12px 16px 0;padding:12px;border-radius:12px;background:#0f1a2e;border:1px solid var(--line)}
+.current .k{font-size:11px;color:var(--muted);letter-spacing:1px}
+.current .v{font-size:22px;font-weight:700;margin-top:4px;color:var(--accent)}
+.current .note{margin-top:8px;font-size:13px;line-height:1.65;color:#c9d6ef}
+.checks{padding:12px 16px;overflow:auto;flex:1}
+.checks h3{margin:8px 0 8px;font-size:13px;color:var(--muted);font-weight:600}
+.check{
+  display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:10px;
+  border:1px solid transparent;cursor:pointer;margin-bottom:6px;background:#0e1728;
+}
+.check:hover{border-color:var(--line)}
+.check.active{border-color:var(--accent);background:#13233d}
+.check.done{border-color:rgba(61,214,140,.35)}
+.check .box{
+  width:18px;height:18px;border-radius:5px;border:2px solid var(--line);
+  flex:0 0 auto;margin-top:2px;display:grid;place-items:center;font-size:11px;
+}
+.check.done .box{background:var(--ok);border-color:var(--ok);color:#041018}
+.check .txt strong{display:block;font-size:14px}
+.check .txt span{display:block;color:var(--muted);font-size:12px;margin-top:2px;line-height:1.45}
+.teach{
+  margin:0 16px 12px;padding:12px;border-radius:12px;background:linear-gradient(135deg,#14233c,#101b2e);
+  border:1px solid #2a4568;font-size:13px;line-height:1.7;
+}
+.teach b{color:var(--accent2)}
+.side-actions{display:flex;gap:8px;padding:0 16px 14px;flex-wrap:wrap}
+.side-actions button{flex:1;min-width:120px}
+.footer{
+  padding:8px 16px 12px;color:var(--muted);font-size:11px;line-height:1.5;
+  border-top:1px solid var(--line);background:#0a101c;
+}
+.modal{
+  position:fixed;inset:0;background:rgba(3,8,18,.78);display:none;align-items:center;
+  justify-content:center;z-index:50;padding:20px;
+}
+.modal.show{display:flex}
+.modal-card{
+  width:min(980px,96vw);max-height:92vh;overflow:auto;background:#101827;
+  border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+}
+.modal-card header{
+  display:flex;justify-content:space-between;align-items:center;padding:14px 18px;
+  border-bottom:1px solid var(--line);position:sticky;top:0;background:#101827;
+}
+.modal-card header h3{margin:0;font-size:16px}
+.modal-card .body{padding:16px 18px}
+.modal-card img{width:100%;height:auto;border-radius:10px;background:#fff}
+.vocab{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:12px}
+.vocab div{background:#0e1728;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px}
+.vocab b{color:var(--accent)}
+#loadMsg{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(5,8,15,.72);color:var(--muted);font-size:14px;z-index:3;pointer-events:none;
+}
+#loadMsg.hide{display:none}
+
+#failBanner{
+  display:none;margin:0;padding:12px 14px;background:#4a1020;border-bottom:2px solid #ff4d6d;
+  color:#ffd0d8;font-size:14px;font-weight:700;line-height:1.5;
+}
+#failBanner.show{display:block}
+#failBanner code{color:#fff;font-weight:800}
+.badge.ok{border-color:rgba(61,214,140,.55);color:#b7f5d4}
+.badge.ok strong{color:var(--ok)}
+.badge.warn{border-color:rgba(255,77,109,.55);color:#ffb0bc}
+.badge.warn strong{color:var(--hot)}
+.badge.filewarn{border-color:rgba(255,176,32,.7);color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <h1>固定翼的结构与特点 · 三维</h1>
+    <div class="sub">可 360° 轨道旋转 · 与真机 2D 页同一课堂路径</div>
+  </div>
+  <div class="path" id="pathSteps">
+    <div class="step active" data-step="y12"><span class="num">1</span><span>运12 · 认三舵</span></div>
+    <div class="step" data-step="fp98"><span class="num">2</span><span>FP-98 · 单发双翼</span></div>
+    <div class="step" data-step="yl"><span class="num">3</span><span>翼龙 · V尾混控</span></div>
+  </div>
+  <div class="tools">
+    <button type="button" id="btnCalibrate">标定模式</button>
+    <button type="button" id="btnAutoRot">自动旋转</button>
+    <button type="button" id="btnWing">机翼剖视 1–8</button>
+    <button type="button" id="btnFuse">机身剖视 1–5</button>
+    <a class="sidebtn" href="固定翼的结构与特点-真机互动.html" style="text-decoration:none">回 2D 真机页</a>
+  </div>
+</div>
+
+<div class="main">
+  <section class="stage-wrap">
+    <div class="ac-tabs" id="acTabs">
+      <button type="button" class="active" data-ac="y12">运12<span class="tag">本机网格 · 常规⊥尾 · 三舵</span></button>
+      <button type="button" data-ac="fp98">FP-98<span class="tag">运5平台 · 单发双翼 · 无人货机</span></button>
+      <button type="button" data-ac="yl">翼龙 I<span class="tag">本机网格 · 长航时 · V尾混控</span></button>
+    </div>
+    <p class="hint-banner" id="hintBanner"></p>
+    <div id="failBanner" role="alert"></div>
+    <div class="stage-meta">
+      <div class="badge">当前机型 <strong id="acName">运12</strong></div>
+      <div class="badge">传操纵 <strong id="acControl">—</strong></div>
+      <div class="badge">模型 <strong id="modelKind">—</strong></div>
+      <div class="badge" id="loadStatusBadge"><strong id="loadStatus">检测中…</strong></div>
+      <div class="badge cal" id="overrideBadge" style="display:none">已用本地标定</div>
+      <div class="view-tools">
+        <button type="button" data-view="default">斜视</button>
+        <button type="button" data-view="side">侧视</button>
+        <button type="button" data-view="front">前视</button>
+        <button type="button" data-view="top">俯视</button>
+        <button type="button" id="btnResetCam">复位视角</button>
+      </div>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="c3d"></canvas>
+      <div class="hot-overlay" id="hotOverlay"></div>
+      <div id="loadMsg">加载三维模型…</div>
+    </div>
+    <div class="legend">
+      <span><i class="a"></i>未点过</span>
+      <span><i class="b"></i>当前选中</span>
+      <span><i class="c"></i>已学过</span>
+      <span>拖拽空白处旋转 · 滚轮缩放 · 右键平移 · 点红点看讲解</span>
+    </div>
+    <div class="cal-bar" id="calBar">
+      <span class="hint">标定中：拖红点改屏幕位置；或点机身表面用射线重放点。空白天空不新建点。坐标存本地机体系 (x,y,z)。</span>
+      <button type="button" id="btnExportHot">导出坐标</button>
+      <button type="button" id="btnImportHot">导入坐标</button>
+      <button type="button" id="btnResetHot">重置为本版默认</button>
+      <input type="file" id="importHotFile" accept="application/json,.json" hidden />
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="side-head">
+      <h2>结构清单 · 课堂卡</h2>
+      <p>与 2D 真机页同一套部件词汇。三维用于辨认布局；剖视仍看教材图。</p>
+    </div>
+    <div class="current">
+      <div class="k">CURRENT PART</div>
+      <div class="v" id="curName">请点一个热点</div>
+      <div class="note" id="curNote">按路径：运12 认三舵 → FP-98 同布局无人 → 翼龙 V 尾混控。</div>
+    </div>
+    <div class="checks" id="checkList"></div>
+    <div class="teach" id="teachBox"></div>
+    <div class="side-actions">
+      <button type="button" class="sidebtn" id="btnNextAc">下一机 →</button>
+      <button type="button" class="sidebtn" id="btnReset">重置本机进度</button>
+    </div>
+  </aside>
+</div>
+
+<footer class="footer">
+  运12：CadNav「China PLA Y-12 Utility Aircraft」OBJ 转 GLB（非商业课堂教学使用）· FP-98：ksgy「Antonov An-2」CC BY-NC 3.0，运5/An-2 同平台外形参考，非 FP-98 本机扫描 · 翼龙 I：3D Warehouse 用户 prg45 P. 发布的 Wing Loong I（注明来自 War Thunder），SKP 转 GLB，非原厂 CAD ·
+  Three.js 已内置 <code>assets/vendor/three/</code>，须用 <b>打开三维-本地服务.ps1</b> 或 bat 经 <code>http://127.0.0.1:8765</code> 打开；直接双击 HTML（file://）会导致 GLB 被拦、只见灰模。若点位飘了，标定里点「重置为本版默认」。
+</footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <header>
+      <h3 id="modalTitle">剖视</h3>
+      <button type="button" class="sidebtn" id="modalClose">关闭</button>
+    </header>
+    <div class="body">
+      <img id="modalImg" alt="教材剖视" />
+      <div class="vocab" id="modalVocab"></div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./assets/vendor/three/build/three.module.js",
+    "three/addons/": "./assets/vendor/three/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const WING_VOCAB = [
+  ["1 接头","翼根与机身的连接件，传力入口"],
+  ["2 加强肋","根部加厚翼肋，开减轻孔"],
+  ["3 翼梁","翼展方向主承力梁"],
+  ["4 前墙","前缘侧纵向壁板/前梁腹板"],
+  ["5 蒙皮","外层气动表面，参与受力"],
+  ["6 后墙","后缘侧纵向壁板/后梁腹板"],
+  ["7 翼肋","保持翼剖面形状的横向构件"],
+  ["8 桁条","蒙皮下纵向加筋，防屈曲"]
+];
+const FUSE_VOCAB = [
+  ["1 桁梁","机身纵向主承力长桁/梁"],
+  ["2 桁条","较轻的纵向加筋"],
+  ["3 蒙皮","机身外蒙皮，半硬壳承力"],
+  ["4 加强隔框","开孔/接头处加厚框"],
+  ["5 普通隔框","维持剖面形状的常规框"]
+];
+
+const AIRCRAFT = {
+  y12: {
+    name: "运12（布局课）",
+    control: "钢索机械主传 + 电动配平/襟翼",
+    modelKind: "运12本机网格 · CadNav / OBJ转GLB",
+    hint: "路径①：旋转观察<strong>运12本机三维网格</strong>。先点<em>升降舵 / 方向舵 / 副翼</em>钉死三舵；再认上单翼、翼下撑杆、双发与固定式前三点起落架。",
+    teach: "本页使用 CadNav 的<strong>运12本机 OBJ 网格</strong>并转为 GLB：<strong>上单翼 + 双发涡桨 + 翼下撑杆 + 常规⊥尾</strong>。锚点是<strong>三舵分家</strong>。模型用于非商业课堂教学，不是原厂 CAD。",
+    mesh: "y12glb",
+    glb: "assets/models/y12-harbin.glb",
+    parts: [
+      {id:"elevator", name:"升降舵", short:"俯仰", must:true, x:0.15, y:1.6, z:-9.5,
+        note:"水平尾翼后缘活动面。认尾：水平安定面 + 升降舵。"},
+      {id:"rudder", name:"方向舵", short:"偏航", must:true, x:0, y:3.2, z:-10.2,
+        note:"垂直尾翼后缘活动面。与升降舵、副翼合称「三舵」。"},
+      {id:"aileron", name:"副翼", short:"滚转", must:true, x:8.5, y:2.2, z:-1.2,
+        note:"机翼后缘外侧。左右差动 → 滚转。口诀：三舵分家，各管一轴。"},
+      {id:"wing", name:"机翼", short:"升力面", x:5.5, y:2.4, z:0.5,
+        note:"高单翼示意。内部用教材剖视对齐接头→翼梁→蒙皮→翼肋等。"},
+      {id:"fuse", name:"机身", short:"承力舱体", x:0, y:1.0, z:1.5,
+        note:"半硬壳：桁梁/桁条 + 隔框 + 蒙皮。点「机身剖视」对齐教材 1–5。"},
+      {id:"tail", name:"尾翼（⊥）", short:"安定面", x:0, y:2.4, z:-9.0,
+        note:"常规十字/⊥尾：垂尾 + 平尾分开。翼龙改成 V 尾后舵面要混控。"},
+      {id:"engine", name:"发动机（双发）", short:"涡桨", x:4.2, y:1.6, z:1.8,
+        note:"翼吊双发涡桨。固定翼主靠机翼升力，发动机提供推力。"},
+      {id:"gear", name:"起落架", short:"起落装置", x:1.2, y:-0.2, z:2.0,
+        note:"认支柱与缓冲即可；维护区常见轮挡。"}
+    ]
+  },
+  fp98: {
+    name: "FP-98（运5平台无人货机）",
+    control: "电动舵机 + 无人飞行控制",
+    modelKind: "An-2 / 运5同平台网格 · 非FP-98本机扫描",
+    hint: "路径②：先认<strong>单发 + 双翼 + 常规⊥尾</strong>，再对照三舵。无人化改变的是驾驶与操纵实现，机翼、尾翼和三舵的基本气动分工仍然保留。",
+    teach: "FP-98 以<strong>运5成熟平台</strong>发展无人货运能力。本页使用 An-2 开源网格作<strong>同平台外形参考</strong>：机头单台星形活塞发动机、上下双翼、常规尾翼和固定起落架。它不是 FP-98 本机扫描，无人化改装细节以真机资料为准。",
+    mesh: "an2glb",
+    glb: "assets/models/fp98-an2.glb",
+    span: 18.18,
+    frontSign: -1,
+    parts: [
+      {id:"elevator", name:"升降舵", short:"同布局", must:true, x:0.15, y:1.6, z:-9.5,
+        note:"平尾后缘活动面，仍负责俯仰。无人化不改变三舵的基本气动分工。"},
+      {id:"rudder", name:"方向舵", short:"同布局", must:true, x:0, y:3.2, z:-10.2,
+        note:"垂尾后缘活动面，负责偏航；与运12一样采用平尾、垂尾分设的常规尾翼。"},
+      {id:"aileron", name:"副翼", short:"同布局", must:true, x:8.5, y:2.2, z:-1.2,
+        note:"上翼后缘外侧活动面。左右差动产生滚转，由无人飞行控制系统驱动舵机。"},
+      {id:"wing", name:"上翼", short:"双翼布局", x:5.5, y:2.4, z:0.5,
+        note:"上翼与下翼共同构成双翼布局，在较短翼展下获得较大翼面积。上翼外侧可见副翼。"},
+      {id:"lowerWing", name:"下翼", short:"双翼布局", x:4.8, y:1.0, z:0.4,
+        note:"下翼位于机身下部，通过支柱与张线和上翼形成承力体系。观察时旋转到侧视，分清上下两翼。"},
+      {id:"fuse", name:"机身 / 货舱", short:"载荷空间", x:0, y:1.0, z:1.0,
+        note:"运5平台的机身容积用于货运与任务设备。结构词汇仍用桁梁、蒙皮、隔框；具体无人化舱段改装不以本参考网格为准。"},
+      {id:"tail", name:"尾翼（常规）", short:"⊥尾", x:0, y:2.4, z:-9.0,
+        note:"与运12同属常规尾。下一机翼龙会把平垂尾合成 V 尾。"},
+      {id:"engine", name:"星形发动机（单发）", short:"活塞动力", x:0, y:1.6, z:5.5,
+        note:"机头单台星形活塞发动机驱动拉力螺旋桨。不是运12的翼下双发涡桨布局。"},
+      {id:"gear", name:"起落架", short:"起落装置", x:1.2, y:-0.2, z:2.0,
+        note:"固定式后三点起落架：两侧主轮配合尾部小轮。观察侧视与斜视下的支撑位置。"}
+    ]
+  },
+  yl: {
+    name: "翼龙 I",
+    control: "电动舵机 + V尾混控",
+    modelKind: "翼龙I本机网格 · SKP转GLB · 非原厂CAD",
+    hint: "路径③：先点<em>V尾</em>，再问：没有单独升降舵/方向舵时，俯仰和偏航怎么出？答案是<strong>两片斜舵面混控</strong>。",
+    teach: "本页使用<strong>翼龙 I 本机三维网格</strong>：细长机身、高展弦比机翼、后推螺旋桨和<b>V 形尾翼</b>。两片 V 舵同向偏转可产生俯仰，差动偏转可产生偏航；传操纵为<strong>电动舵机</strong>。模型来自公开游戏网格，仅作课堂外形参考，不是原厂 CAD。",
+    mesh: "ylglb",
+    glb: "assets/models/wingloong-i.glb",
+    span: 14,
+    parts: [
+      {id:"vtail", name:"V尾（斜舵面）", short:"混控", must:true, x:0.55, y:1.35, z:-5.6,
+        note:"两片斜置安定面 + 后缘舵。同向偏≈升降舵；差动偏≈方向舵。这是本课收束句。"},
+      {id:"wing", name:"机翼", short:"大展弦比", must:true, x:3.8, y:1.15, z:0.2,
+        note:"高展弦比平直机翼，以较大的翼展获得升力并服务长航时飞行。"},
+      {id:"aileron", name:"副翼", short:"滚转", x:5.2, y:1.15, z:-0.15,
+        note:"滚转仍主要靠副翼；V 尾主要分担俯仰/偏航。"},
+      {id:"fuse", name:"机身", short:"细长承力", x:0, y:0.85, z:1.2,
+        note:"细长半硬壳。词汇仍是桁梁/桁条/蒙皮/隔框。"},
+      {id:"engine", name:"发动机（后推）", short:"推力", x:0, y:0.95, z:-4.6,
+        note:"机尾推进式螺旋桨，机头让给传感器与链路。"},
+      {id:"gear", name:"起落架", short:"前三点", x:0.45, y:0.15, z:1.5,
+        note:"前三点起落架。本页只辨认机轮与承力支柱，不据此判断具体收放机构。"},
+      {id:"payload", name:"光电吊舱 / 载荷", short:"任务设备", x:0, y:0.35, z:4.3,
+        note:"机头下方球型光电/红外吊舱。"},
+      {id:"satcom", name:"鼻锥任务段", short:"链路/任务", x:0, y:1.05, z:4.8,
+        note:"圆润的机身前段为任务设备与链路天线布置提供空间；具体设备以实际构型为准。"}
+    ]
+  }
+};
+
+const ORDER = ["y12","fp98","yl"];
+const LS_KEY = "fw-hotspots-3d-v5";
+const $ = (id)=>document.getElementById(id);
+
+let state = {
+  ac: "y12",
+  currentPart: null,
+  done: { y12:new Set(), fp98:new Set(), yl:new Set() }
+};
+let calibrateMode = false;
+let autoRotate = false;
+let overrides = {};
+try { overrides = JSON.parse(localStorage.getItem(LS_KEY) || "{}") || {}; } catch(e){ overrides = {}; }
+
+let renderer, scene, camera, controls, rootGroup, acGroup;
+let hotMarkers = []; // {id, world:Vector3, el}
+let drag = null;
+let raycaster = new THREE.Raycaster();
+let pointer = new THREE.Vector2();
+const clock = new THREE.Clock();
+const glbCache = {};
+
+function matAir(color=0xc5ced8){
+  return new THREE.MeshStandardMaterial({
+    color, metalness:0.12, roughness:0.72, flatShading:false
+  });
+}
+function matAccent(color=0x3a4558){
+  return new THREE.MeshStandardMaterial({ color, metalness:0.2, roughness:0.55 });
+}
+function addEdges(mesh, color=0x1a2230){
+  const eg = new THREE.EdgesGeometry(mesh.geometry, 25);
+  const lines = new THREE.LineSegments(eg, new THREE.LineBasicMaterial({ color, transparent:true, opacity:0.55 }));
+  mesh.add(lines);
+}
+
+function y12Loft(sections, material, radial=32, squareness=2.5){
+  const positions = [], indices = [];
+  sections.forEach(sec=>{
+    for(let j=0;j<radial;j++){
+      const a = j/radial*Math.PI*2;
+      const c = Math.cos(a), s = Math.sin(a);
+      const x = sec.w*0.5*Math.sign(c)*Math.pow(Math.abs(c),2/squareness);
+      const y = sec.cy + sec.h*0.5*Math.sign(s)*Math.pow(Math.abs(s),2/squareness);
+      positions.push(x,y,sec.z);
+    }
+  });
+  for(let i=0;i<sections.length-1;i++){
+    for(let j=0;j<radial;j++){
+      const n = (j+1)%radial;
+      const a = i*radial+j, b = i*radial+n;
+      const c = (i+1)*radial+j, d = (i+1)*radial+n;
+      indices.push(a,b,d,a,d,c);
+    }
+  }
+  const tailCenter = positions.length/3;
+  positions.push(0,sections[0].cy,sections[0].z);
+  const noseCenter = positions.length/3;
+  const last = sections[sections.length-1];
+  positions.push(0,last.cy,last.z);
+  for(let j=0;j<radial;j++){
+    const n=(j+1)%radial;
+    indices.push(tailCenter,n,j);
+    const off=(sections.length-1)*radial;
+    indices.push(noseCenter,off+j,off+n);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return new THREE.Mesh(geo,material);
+}
+
+function y12WingSegment(stations, front, back, material){
+  const steps=10, stride=(steps+1)*2, positions=[], indices=[];
+  stations.forEach(st=>{
+    const chord=st.le-st.te;
+    for(let layer=0;layer<2;layer++){
+      for(let j=0;j<=steps;j++){
+        const t=front+(back-front)*j/steps;
+        const half=5*0.115*chord*(0.2969*Math.sqrt(t)-0.126*t-0.3516*t*t+0.2843*t*t*t-0.1036*t*t*t*t);
+        const camber=0.018*chord*Math.sin(Math.PI*t);
+        positions.push(st.x,st.y+camber+(layer===0?half:-half),st.le-chord*t);
+      }
+    }
+  });
+  for(let i=0;i<stations.length-1;i++){
+    for(let j=0;j<steps;j++){
+      const a=i*stride+j, b=(i+1)*stride+j, c=a+1, d=b+1;
+      const n=steps+1;
+      indices.push(a,b,d,a,d,c);
+      indices.push(a+n,d+n,b+n,a+n,c+n,d+n);
+    }
+    const a=i*stride, b=(i+1)*stride, n=steps+1;
+    indices.push(a,a+n,b+n,a,b+n,b);
+    const ar=a+steps, br=b+steps;
+    indices.push(ar,br+n,ar+n,ar,br,br+n);
+  }
+  [0,stations.length-1].forEach(i=>{
+    for(let j=0;j<steps;j++){
+      const a=i*stride+j, n=steps+1;
+      indices.push(a,a+n,a+n+1,a,a+n+1,a+1);
+    }
+  });
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return new THREE.Mesh(geo,material);
+}
+
+function y12PrismZY(points, thickness, material){
+  const shape=new THREE.Shape();
+  shape.moveTo(points[0][0],points[0][1]);
+  points.slice(1).forEach(p=>shape.lineTo(p[0],p[1]));
+  shape.closePath();
+  const geo=new THREE.ExtrudeGeometry(shape,{depth:thickness,bevelEnabled:false,curveSegments:1});
+  geo.rotateY(-Math.PI/2);
+  geo.translate(thickness/2,0,0);
+  return new THREE.Mesh(geo,material);
+}
+
+function y12Rod(group, from, to, radius, material){
+  const a=new THREE.Vector3(...from), b=new THREE.Vector3(...to);
+  const dir=b.clone().sub(a);
+  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,dir.length(),12),material);
+  mesh.position.copy(a.add(b).multiplyScalar(0.5));
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+  group.add(mesh);
+  return mesh;
+}
+
+function y12Window(group, side, z, y, w, h, material, cockpit=false){
+  let shape;
+  if(cockpit){
+    shape=new THREE.Shape();
+    shape.moveTo(-w*0.52,-h*0.42);
+    shape.lineTo(w*0.46,-h*0.42);
+    shape.lineTo(w*0.54,h*0.30);
+    shape.lineTo(-w*0.28,h*0.50);
+    shape.closePath();
+  }else{
+    const r=Math.min(w,h)*0.18;
+    shape=new THREE.Shape();
+    shape.moveTo(-w/2+r,-h/2);
+    shape.lineTo(w/2-r,-h/2);
+    shape.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);
+    shape.lineTo(w/2,h/2-r);
+    shape.quadraticCurveTo(w/2,h/2,w/2-r,h/2);
+    shape.lineTo(-w/2+r,h/2);
+    shape.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);
+    shape.lineTo(-w/2,-h/2+r);
+    shape.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);
+  }
+  const mesh=new THREE.Mesh(new THREE.ShapeGeometry(shape,8),material);
+  mesh.rotation.y=side*Math.PI/2;
+  mesh.position.set(side*(cockpit?1.08:1.13),y,z);
+  group.add(mesh);
+}
+
+function y12Label(group, side){
+  const canvas=document.createElement("canvas");
+  canvas.width=512; canvas.height=128;
+  const ctx=canvas.getContext("2d");
+  ctx.clearRect(0,0,512,128);
+  ctx.fillStyle="#27465c";
+  ctx.font="700 68px Arial, sans-serif";
+  ctx.textAlign="center";
+  ctx.fillText("Y-12",256,78);
+  ctx.font="500 22px Arial, sans-serif";
+  ctx.fillText("HARBIN",256,111);
+  const tex=new THREE.CanvasTexture(canvas);
+  tex.colorSpace=THREE.SRGBColorSpace;
+  const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide,depthWrite:false});
+  const label=new THREE.Mesh(new THREE.PlaneGeometry(1.75,0.44),mat);
+  label.rotation.y=side*Math.PI/2;
+  label.position.set(side*1.13,1.72,-2.6);
+  group.add(label);
+}
+
+function buildY12(){
+  const g=new THREE.Group();
+  g.name="Y-12 photographic reconstruction";
+  const air=new THREE.MeshStandardMaterial({color:0xf4f5f2,metalness:0.12,roughness:0.48,side:THREE.DoubleSide});
+  const control=new THREE.MeshStandardMaterial({color:0xcbd7da,metalness:0.10,roughness:0.52,side:THREE.DoubleSide});
+  const dark=new THREE.MeshStandardMaterial({color:0x26343d,metalness:0.25,roughness:0.48});
+  const metal=new THREE.MeshStandardMaterial({color:0x9da9ae,metalness:0.72,roughness:0.3});
+  const glass=new THREE.MeshStandardMaterial({color:0x294d61,metalness:0.52,roughness:0.2,side:THREE.DoubleSide});
+  const tire=new THREE.MeshStandardMaterial({color:0x161b1d,roughness:0.88});
+  const blue=new THREE.MeshStandardMaterial({color:0x315f7c,metalness:0.12,roughness:0.5});
+
+  const fuselage=y12Loft([
+    {z:-7.28,w:0.12,h:0.18,cy:1.86},
+    {z:-6.65,w:0.42,h:0.52,cy:1.86},
+    {z:-5.65,w:0.70,h:0.84,cy:1.86},
+    {z:-4.25,w:1.06,h:1.25,cy:1.90},
+    {z:-3.00,w:1.65,h:1.78,cy:2.00},
+    {z:-1.50,w:2.06,h:2.14,cy:2.07},
+    {z:0.50,w:2.18,h:2.25,cy:2.10},
+    {z:2.70,w:2.14,h:2.24,cy:2.10},
+    {z:3.90,w:1.98,h:2.10,cy:2.05},
+    {z:4.85,w:1.74,h:1.82,cy:1.98},
+    {z:5.75,w:1.40,h:1.38,cy:1.84},
+    {z:6.50,w:0.96,h:0.98,cy:1.73},
+    {z:6.98,w:0.68,h:0.70,cy:1.66},
+    {z:7.22,w:0.34,h:0.38,cy:1.62},
+    {z:7.30,w:0.16,h:0.18,cy:1.61}
+  ],air,40,2.55);
+  fuselage.name="fuselage";
+  g.add(fuselage);
+
+  const wingStations=[
+    {x:0.65,le:1.30,te:-1.08,y:3.20},
+    {x:2.00,le:1.30,te:-1.09,y:3.23},
+    {x:4.50,le:1.23,te:-1.10,y:3.32},
+    {x:8.62,le:0.96,te:-0.45,y:3.50}
+  ];
+  const wingRight=new THREE.Group();
+  wingRight.add(y12WingSegment(wingStations,0,0.70,air));
+  wingRight.add(y12WingSegment(wingStations.slice(0,3),0.70,1,control));
+  wingRight.add(y12WingSegment(wingStations.slice(2),0.70,1,control));
+  const wingLeft=wingRight.clone(true);
+  wingLeft.scale.x=-1;
+  g.add(wingRight,wingLeft);
+
+  [-1,1].forEach(side=>{
+    y12Rod(g,[side*0.82,1.20,0.08],[side*4.20,3.31,0.10],0.055,metal);
+    y12Rod(g,[side*0.86,1.23,-0.18],[side*4.12,3.30,-0.34],0.038,metal);
+
+    const nacelle=y12Loft([
+      {z:0.10,w:0.44,h:0.48,cy:2.77},
+      {z:0.55,w:0.78,h:0.82,cy:2.79},
+      {z:1.35,w:0.96,h:0.96,cy:2.80},
+      {z:2.15,w:0.91,h:0.91,cy:2.80},
+      {z:2.52,w:0.67,h:0.69,cy:2.80},
+      {z:2.66,w:0.42,h:0.44,cy:2.80}
+    ],air,32,2.05);
+    nacelle.position.x=side*3.18;
+    g.add(nacelle);
+
+    const exhaust=new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.13,0.48,16),dark);
+    exhaust.rotation.x=Math.PI/2;
+    exhaust.position.set(side*3.60,2.60,0.65);
+    g.add(exhaust);
+
+    const prop=new THREE.Group();
+    prop.position.set(side*3.18,2.80,2.88);
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,0.22,20),metal);
+    hub.rotation.x=Math.PI/2;
+    prop.add(hub);
+    const bladeShape=new THREE.Shape();
+    bladeShape.moveTo(-0.065,0.16);
+    bladeShape.lineTo(-0.105,0.72);
+    bladeShape.quadraticCurveTo(-0.10,1.04,-0.025,1.16);
+    bladeShape.lineTo(0.075,1.13);
+    bladeShape.quadraticCurveTo(0.13,0.66,0.085,0.22);
+    bladeShape.closePath();
+    const bladeGeo=new THREE.ExtrudeGeometry(bladeShape,{depth:0.045,bevelEnabled:false});
+    bladeGeo.translate(0,0,-0.0225);
+    for(let i=0;i<3;i++){
+      const blade=new THREE.Mesh(bladeGeo,dark);
+      blade.rotation.z=i*Math.PI*2/3+0.22;
+      prop.add(blade);
+    }
+    const spinner=new THREE.Mesh(new THREE.ConeGeometry(0.20,0.43,24),metal);
+    spinner.rotation.x=Math.PI/2;
+    spinner.position.z=0.30;
+    prop.add(spinner);
+    g.add(prop);
+
+    [2.30,1.05,-0.22,-1.47].forEach(z=>y12Window(g,side,z,2.40,0.68,0.66,glass));
+    y12Window(g,side,3.58,2.43,0.92,0.86,glass,true);
+
+    const windshieldGeo=new THREE.BufferGeometry();
+    windshieldGeo.setAttribute("position",new THREE.Float32BufferAttribute([
+      side*0.045,2.15,6.25,
+      side*0.68,2.15,6.03,
+      side*0.72,2.78,5.39,
+      side*0.045,2.88,5.58
+    ],3));
+    windshieldGeo.setIndex([0,1,2,0,2,3]);
+    windshieldGeo.computeVertexNormals();
+    const windshield=new THREE.Mesh(windshieldGeo,glass);
+    g.add(windshield);
+    const w0=[side*0.045,2.15,6.25], w1=[side*0.68,2.15,6.03];
+    const w2=[side*0.72,2.78,5.39], w3=[side*0.045,2.88,5.58];
+    y12Rod(g,w0,w1,0.022,air);
+    y12Rod(g,w1,w2,0.022,air);
+    y12Rod(g,w2,w3,0.022,air);
+    y12Rod(g,w3,w0,0.022,air);
+
+    y12Rod(g,[side*1.34,1.35,0.20],[side*1.55,0.42,0.35],0.065,metal);
+    y12Rod(g,[side*1.18,1.28,-0.05],[side*1.55,0.46,0.35],0.035,metal);
+    const wheel=new THREE.Mesh(new THREE.CylinderGeometry(0.39,0.39,0.25,28),tire);
+    wheel.rotation.z=Math.PI/2;
+    wheel.position.set(side*1.55,0.39,0.35);
+    g.add(wheel);
+    const hubMain=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,0.27,20),metal);
+    hubMain.rotation.z=Math.PI/2;
+    hubMain.position.copy(wheel.position);
+    g.add(hubMain);
+    y12Label(g,side);
+  });
+
+  y12Rod(g,[0,2.45,4.55],[0,2.85,4.88],0.025,metal);
+  y12Rod(g,[0,1.34,4.60],[0,0.31,4.76],0.052,metal);
+  y12Rod(g,[0,1.12,4.42],[0,0.48,4.76],0.03,metal);
+  const noseWheel=new THREE.Mesh(new THREE.CylinderGeometry(0.29,0.29,0.20,26),tire);
+  noseWheel.rotation.z=Math.PI/2;
+  noseWheel.position.set(0,0.29,4.76);
+  g.add(noseWheel);
+  const noseHub=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,0.22,18),metal);
+  noseHub.rotation.z=Math.PI/2;
+  noseHub.position.copy(noseWheel.position);
+  g.add(noseHub);
+
+  const tailStations=[
+    {x:0.05,le:-5.35,te:-6.96,y:1.99},
+    {x:1.45,le:-5.48,te:-6.91,y:2.02},
+    {x:2.85,le:-5.72,te:-6.72,y:2.08}
+  ];
+  const tailRight=new THREE.Group();
+  tailRight.add(y12WingSegment(tailStations,0,0.66,air));
+  tailRight.add(y12WingSegment(tailStations,0.66,1,control));
+  const tailLeft=tailRight.clone(true);
+  tailLeft.scale.x=-1;
+  g.add(tailRight,tailLeft);
+
+  const fin=y12PrismZY([[-5.42,1.96],[-5.98,5.47],[-6.56,5.47],[-6.48,1.96]],0.15,air);
+  const rudder=y12PrismZY([[-6.48,1.96],[-6.56,5.47],[-7.06,5.20],[-7.16,1.96]],0.13,control);
+  g.add(fin,rudder);
+  const tailBand=y12PrismZY([[-5.80,3.78],[-5.98,5.47],[-6.56,5.47],[-6.50,3.78]],0.158,blue);
+  g.add(tailBand);
+
+  const beacon=new THREE.Mesh(new THREE.SphereGeometry(0.055,12,8),new THREE.MeshBasicMaterial({color:0xc0392b}));
+  beacon.position.set(0,5.51,-6.25);
+  g.add(beacon);
+  [-1,1].forEach(side=>{
+    const light=new THREE.Mesh(new THREE.SphereGeometry(0.055,12,8),new THREE.MeshBasicMaterial({color:side>0?0x2e8b57:0xc0392b}));
+    light.position.set(side*8.57,3.50,0.35);
+    g.add(light);
+  });
+  y12Rod(g,[0,3.20,1.30],[0,3.78,1.16],0.018,dark);
+  y12Rod(g,[0,1.60,7.05],[0,1.60,7.55],0.014,metal);
+
+  g.traverse(obj=>{
+    if(obj.isMesh){
+      obj.castShadow=true;
+      obj.receiveShadow=true;
+    }
+  });
+  return g;
+}
+
+function buildWingLoong(){
+  // Denser teaching mesh: tapered fuse, airfoilish wing, clear V-tail, pusher disc.
+  const g = new THREE.Group();
+  const body = matAir(0xd4dae2);
+  const dark = matAccent(0x3e4858);
+  const glass = new THREE.MeshStandardMaterial({ color:0x6a849c, metalness:0.3, roughness:0.25, transparent:true, opacity:0.55 });
+
+  // tapered fuselage via lathe-like stacked capsules / cones
+  const fuseGroup = new THREE.Group();
+  const sections = [
+    // r, len, zCenter
+    [0.22, 0.9, 4.6],
+    [0.38, 1.2, 3.6],
+    [0.45, 2.4, 1.8],
+    [0.42, 2.2, -0.4],
+    [0.34, 1.6, -2.4],
+    [0.26, 1.2, -3.8]
+  ];
+  sections.forEach(([r,len,z])=>{
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r*0.92, r, len, 24), body);
+    m.rotation.x = Math.PI/2;
+    m.position.set(0, 0.95, z);
+    fuseGroup.add(m);
+  });
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.28, 20, 16), body);
+  nose.scale.set(1.05, 0.9, 1.55);
+  nose.position.set(0, 0.95, 5.15);
+  fuseGroup.add(nose);
+  // canopy blister
+  const canopy = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 12), glass);
+  canopy.scale.set(0.85, 0.55, 1.2);
+  canopy.position.set(0, 1.22, 3.55);
+  fuseGroup.add(canopy);
+  g.add(fuseGroup);
+
+  // payload ball under nose
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.26, 18, 14), dark);
+  ball.position.set(0, 0.38, 4.35);
+  g.add(ball);
+
+  // airfoilish high-aspect wing: two tapered halves + slight dihedral
+  [-1,1].forEach(s=>{
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(6.1, 0.11, 1.25), body);
+    wing.position.set(s*3.05, 1.18, 0.25);
+    wing.rotation.z = s * 0.04;
+    wing.scale.set(1, 1, 1);
+    // tip thinner via nested tip panel
+    g.add(wing); addEdges(wing);
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.07, 0.85), body);
+    tip.position.set(s*6.0, 1.22, 0.15);
+    tip.rotation.z = s * 0.08;
+    g.add(tip);
+    const wl = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.75, 0.42), body);
+    wl.position.set(s*6.45, 1.55, 0.05);
+    wl.rotation.z = s * -0.28;
+    g.add(wl);
+  });
+  // center wing carry-through
+  const carry = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.14, 1.3), body);
+  carry.position.set(0, 1.16, 0.25);
+  g.add(carry);
+
+  // V-tail ~±40°, thicker fins + visible trailing ruddervators
+  [-1,1].forEach(s=>{
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.09, 1.65, 1.25), body);
+    fin.position.set(s*0.62, 1.45, -4.95);
+    fin.rotation.z = s * (-Math.PI/4.2);
+    fin.rotation.x = 0.06;
+    g.add(fin); addEdges(fin);
+    const rud = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.25, 0.38), dark);
+    rud.position.set(s*0.62, 1.45, -5.55);
+    rud.rotation.z = s * (-Math.PI/4.2);
+    g.add(rud);
+  });
+
+  // pusher prop: hub + disc + blades
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.28, 16), dark);
+  hub.rotation.x = Math.PI/2;
+  hub.position.set(0, 0.95, -4.35);
+  g.add(hub);
+  const disc = new THREE.Mesh(
+    new THREE.CircleGeometry(1.05, 32),
+    new THREE.MeshBasicMaterial({ color:0x9aa6b5, transparent:true, opacity:0.18, side:THREE.DoubleSide })
+  );
+  disc.position.set(0, 0.95, -4.48);
+  g.add(disc);
+  for(let i=0;i<3;i++){
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.95, 0.16), dark);
+    blade.position.set(0, 0.95, -4.5);
+    blade.rotation.z = (i * Math.PI) / 3;
+    g.add(blade);
+  }
+
+  // gear
+  [[0, 0.22, 3.5],[ -1.05, 0.18, 0.55],[1.05, 0.18, 0.55]].forEach(([x,y,z])=>{
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.72, 10), dark);
+    leg.position.set(x, y, z);
+    g.add(leg);
+    const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.065, 10, 18), dark);
+    wheel.rotation.y = Math.PI/2;
+    wheel.position.set(x, 0.03, z);
+    g.add(wheel);
+  });
+
+  const shadow = new THREE.Mesh(
+    new THREE.CircleGeometry(5.8, 40),
+    new THREE.MeshBasicMaterial({ color:0x000000, transparent:true, opacity:0.2 })
+  );
+  shadow.rotation.x = -Math.PI/2;
+  shadow.position.y = 0.01;
+  g.add(shadow);
+
+  g.name = "wingloong-parametric";
+  return g;
+}
+
+function fitCameraToObject(object){
+  const box = new THREE.Box3().setFromObject(object);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z) || 10;
+  const fitScale = Math.max(1,1.40/(camera.aspect||1));
+  const dist = maxDim * 0.95 * fitScale;
+  controls.target.copy(center);
+  camera.position.set(center.x + dist*0.80, center.y + dist*0.38, center.z + dist*1.00);
+  camera.near = maxDim / 200;
+  camera.far = maxDim * 50;
+  camera.updateProjectionMatrix();
+  controls.update();
+  if(camera.aspect < 1.10) fitNarrowView(object);
+}
+
+function fitNarrowView(object){
+  const samples=[];
+  object.updateMatrixWorld(true);
+  object.traverse(obj=>{
+    if(!obj.isMesh || !obj.geometry?.attributes?.position) return;
+    const attr=obj.geometry.attributes.position;
+    const step=Math.max(1,Math.ceil(attr.count/400));
+    for(let i=0;i<attr.count;i+=step){
+      samples.push(new THREE.Vector3().fromBufferAttribute(attr,i).applyMatrix4(obj.matrixWorld));
+    }
+  });
+  for(let attempt=0;attempt<8;attempt++){
+    camera.updateMatrixWorld(true);
+    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+    samples.forEach(sample=>{
+      const p=sample.clone().project(camera);
+      minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x);
+      minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y);
+    });
+    if(minX>-0.86 && maxX<0.86 && minY>-0.82 && maxY<0.82) break;
+    camera.position.sub(controls.target).multiplyScalar(1.14).add(controls.target);
+    controls.update();
+  }
+}
+
+function setCameraView(view){
+  if(!acGroup) return;
+  if(view === "default") return fitCameraToObject(acGroup);
+  const box=new THREE.Box3().setFromObject(acGroup);
+  const size=box.getSize(new THREE.Vector3());
+  const center=box.getCenter(new THREE.Vector3());
+  const fitScale=Math.max(1,1.40/(camera.aspect||1));
+  const d=Math.max(size.x,size.y,size.z)*(view === "top" ? 1.55 : 1.10)*fitScale;
+  controls.target.copy(center);
+  if(view === "side") camera.position.set(center.x+d,center.y+size.y*0.18,center.z);
+  if(view === "front") camera.position.set(center.x,center.y+size.y*0.16,center.z+d*(AIRCRAFT[state.ac].frontSign || 1));
+  if(view === "top") camera.position.set(center.x,center.y+d,center.z+0.01);
+  camera.up.set(0,1,0);
+  controls.update();
+}
+
+let lastLoadSource = "pending"; // glb | fallback | parametric
+let lastBBox = null;
+
+function gentlePreserveMaterials(root, forceDoubleSide=false){
+  // Keep albedo/maps; only clamp extreme shininess for classroom lighting.
+  root.traverse(obj=>{
+    if(!obj.isMesh) return;
+    const cols = Array.isArray(obj.material) ? obj.material : [obj.material];
+    cols.forEach(m=>{
+      if(!m) return;
+      if("metalness" in m && typeof m.metalness === "number"){
+        m.metalness = Math.min(m.metalness, 0.45);
+      }
+      if("roughness" in m && typeof m.roughness === "number"){
+        // do not flatten to matte gray — only lift ultra-shiny
+        if(m.roughness < 0.25) m.roughness = 0.35;
+      }
+      if(m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+      // X-Plane wings and tail surfaces are modeled as single-sided polygons.
+      if(forceDoubleSide) m.side = THREE.DoubleSide;
+      m.needsUpdate = true;
+    });
+  });
+}
+
+function normalizeModel(model, targetSpan=13){
+  // Scale first, then center in the unrotated wrapper's coordinate system.
+  model.updateMatrixWorld(true);
+  let box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const span = Math.max(size.x, 0.001);
+  const s = targetSpan / span;
+  model.scale.multiplyScalar(s);
+  model.updateMatrixWorld(true);
+  box = new THREE.Box3().setFromObject(model);
+  const center = box.getCenter(new THREE.Vector3());
+  model.position.x -= center.x;
+  model.position.z -= center.z;
+  model.position.y -= box.min.y;
+  model.updateMatrixWorld(true);
+  return new THREE.Box3().setFromObject(model);
+}
+
+function twinLandmarks(box){
+  const size = box.getSize(new THREE.Vector3());
+  const min = box.min, max = box.max;
+  const cx = (min.x + max.x) / 2;
+  const cy = (min.y + max.y) / 2;
+  const cz = (min.z + max.z) / 2;
+  return {
+    elevator: { x: cx + size.x*0.02, y: min.y + size.y*0.42, z: min.z + size.z*0.10 },
+    rudder:   { x: cx,               y: min.y + size.y*0.78, z: min.z + size.z*0.07 },
+    aileron:  { x: max.x * 0.82,     y: min.y + size.y*0.52, z: cz - size.z*0.02 },
+    wing:     { x: max.x * 0.52,     y: min.y + size.y*0.55, z: cz + size.z*0.04 },
+    fuse:     { x: cx,               y: min.y + size.y*0.32, z: cz + size.z*0.08 },
+    tail:     { x: cx,               y: min.y + size.y*0.55, z: min.z + size.z*0.14 },
+    engine:   { x: max.x * 0.36,     y: min.y + size.y*0.38, z: cz + size.z*0.12 },
+    gear:     { x: max.x * 0.10,     y: min.y + size.y*0.06, z: cz + size.z*0.10 },
+    cargo:    { x: cx,               y: min.y + size.y*0.28, z: cz - size.z*0.06 }
+  };
+}
+
+function y12Landmarks(){
+  return {
+    elevator: { x:1.11, y:2.38, z:-6.16 },
+    rudder:   { x:0.04, y:4.15, z:-6.43 },
+    aileron:  { x:6.74, y:2.71, z:0.74 },
+    wing:     { x:4.33, y:2.81, z:1.30 },
+    fuse:     { x:0.92, y:1.82, z:0.07 },
+    tail:     { x:0.07, y:3.73, z:-5.40 },
+    engine:   { x:2.27, y:2.91, z:1.86 },
+    gear:     { x:1.75, y:0.57, z:1.35 }
+  };
+}
+
+function fp98Landmarks(){
+  return {
+    elevator:  { x:-1.81, y:4.22, z:5.23 },
+    rudder:    { x:0.06, y:4.54, z:5.67 },
+    aileron:   { x:7.13, y:4.06, z:-1.26 },
+    wing:      { x:3.68, y:4.08, z:-2.14 },
+    lowerWing: { x:3.58, y:1.98, z:-2.17 },
+    fuse:      { x:0.84, y:2.69, z:0.56 },
+    tail:      { x:0.10, y:4.96, z:4.73 },
+    engine:    { x:0.70, y:2.68, z:-5.20 },
+    gear:      { x:1.89, y:0.45, z:-3.45 }
+  };
+}
+
+function wingLoongLandmarks(){
+  return {
+    vtail:   { x:1.35, y:2.09, z:-3.81 },
+    wing:    { x:3.52, y:1.28, z:-0.74 },
+    aileron: { x:5.43, y:1.22, z:-0.92 },
+    fuse:    { x:0.03, y:1.64, z:0.90 },
+    engine:  { x:-0.06, y:1.30, z:-4.51 },
+    gear:    { x:1.37, y:0.26, z:-1.03 },
+    payload: { x:0.19, y:0.61, z:3.25 },
+    satcom:  { x:0.03, y:1.83, z:2.97 }
+  };
+}
+
+function bakeDefaultHotspots(id, box){
+  const ac = AIRCRAFT[id];
+  const lm = ac.mesh === "y12glb" ? y12Landmarks()
+    : ac.mesh === "an2glb" ? fp98Landmarks()
+    : ac.mesh === "glb" ? twinLandmarks(box)
+    : wingLoongLandmarks();
+  ac.parts.forEach(p=>{
+    if(lm[p.id]){
+      p.x = Math.round(lm[p.id].x * 100) / 100;
+      p.y = Math.round(lm[p.id].y * 100) / 100;
+      p.z = Math.round(lm[p.id].z * 100) / 100;
+    }
+  });
+}
+
+async function loadGLB(url){
+  if(glbCache[url]) return glbCache[url].clone(true);
+  const loader = new GLTFLoader();
+  const gltf = await loader.loadAsync(url);
+  glbCache[url] = gltf.scene;
+  return gltf.scene.clone(true);
+}
+
+function setLoadStatus(kind, detail){
+  lastLoadSource = kind;
+  const badge = $("loadStatusBadge");
+  const el = $("loadStatus");
+  const fail = $("failBanner");
+  badge.classList.remove("ok","warn","filewarn");
+  if(kind === "glb"){
+    badge.classList.add("ok");
+    el.textContent = "GLB 已加载";
+    fail.classList.remove("show");
+    fail.textContent = "";
+    document.title = "固定翼三维 · GLB已加载";
+  } else if(kind === "parametric"){
+    badge.classList.add("ok");
+    el.textContent = "本地三维已就绪";
+    document.title = "固定翼三维 · 参数化";
+    fail.classList.remove("show");
+  } else {
+    badge.classList.add("warn");
+    el.textContent = "参数化兜底";
+    document.title = "固定翼三维 · 兜底";
+    fail.classList.add("show");
+    fail.innerHTML = detail || "三维模型加载失败：请用 <code>打开三维-本地服务.ps1</code> 或 bat 经本地服务打开（http://127.0.0.1:8765），不要直接双击 HTML。";
+  }
+  if(location.protocol === "file:"){
+    badge.classList.add("filewarn");
+    if(kind !== "glb"){
+      fail.classList.add("show");
+      fail.innerHTML = "检测到 <code>file://</code> 打开方式，浏览器会拦截本地 GLB。请关闭本页，改用同夹 <code>打开三维-本地服务.ps1</code>（或 bat）经 localhost 打开。";
+    }
+  }
+}
+
+async function buildAircraft(id){
+  const ac = AIRCRAFT[id];
+  const g = new THREE.Group();
+  g.name = "ac-"+id;
+  let source = "parametric";
+  if(ac.mesh === "y12glb"){
+    try{
+      const model = await loadGLB(ac.glb);
+      gentlePreserveMaterials(model);
+      model.rotation.set(-Math.PI/2,0,Math.PI);
+      const oriented = new THREE.Group();
+      oriented.add(model);
+      const box = normalizeModel(oriented,17.24);
+      g.add(oriented);
+      lastBBox = box;
+      bakeDefaultHotspots(id,box);
+      source = "glb";
+      setLoadStatus("glb");
+    }catch(err){
+      console.error("Y-12 GLB load failed",err);
+      setLoadStatus("fallback","运12 GLB 加载失败，请经本地服务打开。错误："+(err&&err.message?err.message:String(err)));
+      source = "fallback";
+    }
+  } else if(ac.mesh === "y12"){
+    const model = buildY12();
+    const box = normalizeModel(model,17.24);
+    g.add(model);
+    lastBBox = box;
+    bakeDefaultHotspots(id,box);
+    setLoadStatus("parametric");
+  } else if(ac.mesh === "glb" || ac.mesh === "an2glb" || ac.mesh === "ylglb"){
+    try{
+      const model = await loadGLB(ac.glb);
+      gentlePreserveMaterials(model, ac.mesh === "an2glb");
+      const box = normalizeModel(model, ac.span || 13);
+      g.add(model);
+      lastBBox = box;
+      bakeDefaultHotspots(id, box);
+      source = "glb";
+      setLoadStatus("glb"); // early: don't wait for later UI
+    }catch(err){
+      console.warn("GLB load failed, fallback parametric aircraft", err);
+      const fb = ac.mesh === "ylglb" ? buildWingLoong()
+        : ac.mesh === "an2glb" ? buildBiplaneFallback()
+        : buildTwinFallback();
+      const box = normalizeModel(fb, ac.span || 13);
+      g.add(fb);
+      lastBBox = box;
+      bakeDefaultHotspots(id, box);
+      source = "fallback";
+      setLoadStatus("fallback", "三维模型加载失败：请用 bat / ps1 经本地服务打开。错误：" + (err && err.message ? err.message : String(err)));
+    }
+  } else {
+    const mesh = buildWingLoong();
+    const box = normalizeModel(mesh, 12);
+    g.add(mesh);
+    lastBBox = box;
+    bakeDefaultHotspots(id, box);
+    source = "parametric";
+  }
+  if(source === "glb") setLoadStatus("glb");
+  else if(source === "parametric") setLoadStatus("parametric");
+  return g;
+}
+
+function buildBiplaneFallback(){
+  const g = new THREE.Group();
+  const body = matAir(0xd9e0e2);
+  const dark = matAccent(0x46525b);
+  const fuse = new THREE.Mesh(new THREE.CapsuleGeometry(0.65, 7.2, 6, 16), body);
+  fuse.rotation.x = Math.PI/2;
+  fuse.position.set(0,1.8,0);
+  g.add(fuse);
+  [1.15,3.15].forEach(y=>{
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(13.8,0.13,2.0),body);
+    wing.position.set(0,y,-0.5);
+    g.add(wing);
+  });
+  const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,1.1,20),dark);
+  engine.rotation.x = Math.PI/2;
+  engine.position.set(0,1.8,-4.2);
+  g.add(engine);
+  const hstab = new THREE.Mesh(new THREE.BoxGeometry(4.6,0.12,1.0),body);
+  hstab.position.set(0,2.1,4.6);
+  g.add(hstab);
+  const vstab = new THREE.Mesh(new THREE.BoxGeometry(0.12,2.3,1.4),body);
+  vstab.position.set(0,3.0,4.7);
+  g.add(vstab);
+  [-1,1].forEach(s=>{
+    const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,2.0,8),dark);
+    strut.position.set(s*4.5,2.15,-0.5);
+    g.add(strut);
+  });
+  return g;
+}
+
+function buildTwinFallback(){
+  // simple high-wing twin + conventional tail if GLB missing
+  const g = new THREE.Group();
+  const body = matAir();
+  const dark = matAccent();
+  const fuse = new THREE.Mesh(new THREE.CapsuleGeometry(0.7, 8, 6, 16), body);
+  fuse.rotation.z = Math.PI/2; fuse.position.set(0,1.1,0); g.add(fuse);
+  const wing = new THREE.Mesh(new THREE.BoxGeometry(14, 0.15, 2.2), body);
+  wing.position.set(0, 2.2, 0.5); g.add(wing);
+  [-1,1].forEach(s=>{
+    const nac = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,1.8,12), dark);
+    nac.rotation.z = Math.PI/2; nac.position.set(s*3.2, 1.7, 1.2); g.add(nac);
+  });
+  const hstab = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.1, 1.0), body);
+  hstab.position.set(0, 1.8, -5.2); g.add(hstab);
+  const vstab = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.2, 1.3), body);
+  vstab.position.set(0, 2.7, -5.3); g.add(vstab);
+  return g;
+}
+
+function overrideKey(){ return state.ac; }
+function saveOverrides(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(overrides)); }catch(e){}
+  updateOverrideBadge();
+}
+function loadOverrideMap(){ return overrides[overrideKey()] || {}; }
+function hasOverride(){ const m=loadOverrideMap(); return m && Object.keys(m).length>0; }
+function updateOverrideBadge(){
+  $("overrideBadge").style.display = hasOverride() ? "inline-flex" : "none";
+}
+function partsResolved(){
+  const ac = AIRCRAFT[state.ac];
+  const m = loadOverrideMap();
+  return ac.parts.map(p=>{
+    if(m[p.id] && ["x","y","z"].every(k=>typeof m[p.id][k]==="number")){
+      return Object.assign({}, p, {x:m[p.id].x, y:m[p.id].y, z:m[p.id].z});
+    }
+    return p;
+  });
+}
+function setPartXYZ(id, x,y,z){
+  const k = overrideKey();
+  if(!overrides[k]) overrides[k] = {};
+  overrides[k][id] = {
+    x: Math.round(x*100)/100,
+    y: Math.round(y*100)/100,
+    z: Math.round(z*100)/100
+  };
+  saveOverrides();
+}
+
+function initThree(){
+  const stage = $("stage");
+  const canvas = $("c3d");
+  renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.setClearColor(0xdce4e8, 1);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.00;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xdce4e8, 65, 145);
+
+  camera = new THREE.PerspectiveCamera(40, 1, 0.1, 500);
+  camera.position.set(12, 6, 14);
+
+  controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.enablePan = true;
+  controls.autoRotate = false;
+  controls.autoRotateSpeed = 1.2;
+  controls.minDistance = 3;
+  controls.maxDistance = 80;
+
+  const hemi = new THREE.HemisphereLight(0xf4f8ff, 0x69736f, 1.35);
+  scene.add(hemi);
+  const key = new THREE.DirectionalLight(0xffffff, 1.85);
+  key.position.set(9, 18, 11);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048,2048);
+  key.shadow.camera.left = -16;
+  key.shadow.camera.right = 16;
+  key.shadow.camera.top = 16;
+  key.shadow.camera.bottom = -16;
+  key.shadow.camera.near = 1;
+  key.shadow.camera.far = 60;
+  key.shadow.bias = -0.00025;
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xddeeff, 0.75);
+  fill.position.set(-10, 4, -6);
+  scene.add(fill);
+
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(140,140),
+    new THREE.MeshStandardMaterial({color:0xe3e8e9,roughness:1,metalness:0})
+  );
+  ground.rotation.x = -Math.PI/2;
+  ground.position.y = -0.025;
+  ground.receiveShadow = true;
+  scene.add(ground);
+  const grid = new THREE.GridHelper(60, 30, 0x9cabb4, 0xc2cdd2);
+  grid.position.y = -0.012;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.48;
+  scene.add(grid);
+
+  rootGroup = new THREE.Group();
+  scene.add(rootGroup);
+
+  resize();
+  window.addEventListener("resize", resize);
+  animate();
+}
+
+function resize(){
+  const stage = $("stage");
+  const w = stage.clientWidth || 800;
+  const h = stage.clientHeight || 460;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  controls.autoRotate = autoRotate && !calibrateMode && !drag;
+  controls.update();
+  renderer.render(scene, camera);
+  projectHotspots();
+}
+
+async function setAircraft(id){
+  state.ac = id;
+  state.currentPart = null;
+  document.querySelectorAll("#acTabs button").forEach(b=>b.classList.toggle("active", b.dataset.ac===id));
+  $("loadMsg").classList.remove("hide");
+  $("loadMsg").textContent = "加载三维模型…";
+
+  if(acGroup){ rootGroup.remove(acGroup); acGroup = null; }
+  try{
+    acGroup = await buildAircraft(id);
+    rootGroup.add(acGroup);
+    fitCameraToObject(acGroup);
+  }catch(e){
+    console.error(e);
+    $("loadMsg").textContent = "模型加载失败：" + e.message;
+    setLoadStatus("fallback", "三维模型加载失败：请用 bat / ps1 经本地服务打开。");
+    return;
+  }
+  $("loadMsg").classList.add("hide");
+  renderUI();
+  rebuildHotspots();
+}
+
+function renderUI(){
+  const ac = AIRCRAFT[state.ac];
+  $("acName").textContent = ac.name;
+  $("acControl").textContent = ac.control;
+  $("modelKind").textContent = ac.modelKind;
+  $("hintBanner").innerHTML = ac.hint;
+  $("teachBox").innerHTML = ac.teach;
+  renderPath();
+  renderChecks();
+  updateOverrideBadge();
+  if(!state.currentPart){
+    $("curName").textContent = "请点一个热点";
+    $("curNote").textContent = "拖拽旋转查看布局；点红点阅读讲解。";
+  }
+}
+
+function renderPath(){
+  document.querySelectorAll("#pathSteps .step").forEach(el=>{
+    const id = el.dataset.step;
+    el.classList.toggle("active", id===state.ac);
+    const must = AIRCRAFT[id].parts.filter(p=>p.must);
+    const doneAll = must.every(p=>state.done[id].has(p.id));
+    el.classList.toggle("done", doneAll && id!==state.ac);
+  });
+}
+
+function renderChecks(){
+  const ac = AIRCRAFT[state.ac];
+  const box = $("checkList");
+  box.innerHTML = "";
+  const hMust = document.createElement("h3");
+  hMust.textContent = "必点（本机课堂锚点）";
+  box.appendChild(hMust);
+  ac.parts.filter(p=>p.must).forEach(p=>box.appendChild(checkEl(p)));
+  const hRest = document.createElement("h3");
+  hRest.textContent = "结构拓展";
+  box.appendChild(hRest);
+  ac.parts.filter(p=>!p.must).forEach(p=>box.appendChild(checkEl(p)));
+}
+function checkEl(p){
+  const d = document.createElement("div");
+  d.className = "check";
+  if(state.currentPart===p.id) d.classList.add("active");
+  if(state.done[state.ac].has(p.id)) d.classList.add("done");
+  d.innerHTML = `<div class="box">${state.done[state.ac].has(p.id)?"✓":""}</div>
+    <div class="txt"><strong>${p.name}</strong><span>${p.short||""} · 点击查看讲解</span></div>`;
+  d.onclick = ()=>selectPart(p.id);
+  return d;
+}
+
+function selectPart(id){
+  const ac = AIRCRAFT[state.ac];
+  const p = ac.parts.find(x=>x.id===id);
+  if(!p) return;
+  state.currentPart = id;
+  state.done[state.ac].add(id);
+  $("curName").textContent = p.name + (p.short?`（${p.short}）`:"");
+  $("curNote").textContent = p.note;
+  renderChecks();
+  renderPath();
+  rebuildHotspots();
+}
+
+function rebuildHotspots(){
+  const overlay = $("hotOverlay");
+  overlay.innerHTML = "";
+  hotMarkers = [];
+  const parts = partsResolved();
+  parts.forEach(p=>{
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "hotspot hot3d";
+    if(state.currentPart===p.id) el.classList.add("active");
+    if(state.done[state.ac].has(p.id)) el.classList.add("done");
+    const tip = calibrateMode
+      ? `${p.name}  (${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)})`
+      : p.name;
+    el.innerHTML = `<span>${p.must?"★":"•"}</span><span class="tip">${tip}</span>`;
+    el.addEventListener("pointerdown", (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      if(calibrateMode){
+        el.setPointerCapture(e.pointerId);
+        const live = document.createElement("div");
+        live.className = "coord-live";
+        live.textContent = `${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}`;
+        el.appendChild(live);
+        drag = { partId:p.id, el, live, moved:false, startX:e.clientX, startY:e.clientY };
+        controls.enabled = false;
+      } else {
+        selectPart(p.id);
+      }
+    });
+    overlay.appendChild(el);
+    const local = new THREE.Vector3(p.x, p.y, p.z);
+    hotMarkers.push({ id:p.id, local, el, part:p });
+  });
+  $("stage").classList.toggle("calibrating", calibrateMode);
+  $("calBar").classList.toggle("show", calibrateMode);
+  $("btnCalibrate").classList.toggle("on", calibrateMode);
+  updateOverrideBadge();
+  projectHotspots();
+}
+
+function projectHotspots(){
+  if(!camera || !renderer) return;
+  const canvas = renderer.domElement;
+  const rect = canvas.getBoundingClientRect();
+  hotMarkers.forEach(m=>{
+    const v = m.local.clone();
+    if(acGroup) acGroup.localToWorld(v);
+    v.project(camera);
+    const behind = v.z > 1;
+    const x = (v.x * 0.5 + 0.5) * rect.width;
+    const y = (-v.y * 0.5 + 0.5) * rect.height;
+    m.el.style.left = x + "px";
+    m.el.style.top = y + "px";
+    m.el.style.display = behind ? "none" : "grid";
+  });
+}
+
+function screenToLocalOnMesh(clientX, clientY){
+  const canvas = renderer.domElement;
+  const rect = canvas.getBoundingClientRect();
+  pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const targets = [];
+  if(acGroup) acGroup.traverse(o=>{ if(o.isMesh) targets.push(o); });
+  const hits = raycaster.intersectObjects(targets, true);
+  if(!hits.length) return null;
+  const world = hits[0].point.clone();
+  const local = acGroup.worldToLocal(world);
+  return local;
+}
+
+function screenDragToLocal(clientX, clientY, partId){
+  // keep depth of existing point; move in camera plane
+  const m = hotMarkers.find(h=>h.id===partId);
+  if(!m) return null;
+  const world = m.local.clone();
+  if(acGroup) acGroup.localToWorld(world);
+  const canvas = renderer.domElement;
+  const rect = canvas.getBoundingClientRect();
+  pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  // plane facing camera through current point
+  const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
+    camera.getWorldDirection(new THREE.Vector3()).negate(),
+    world
+  );
+  const hit = new THREE.Vector3();
+  if(!raycaster.ray.intersectPlane(plane, hit)) return null;
+  return acGroup.worldToLocal(hit);
+}
+
+window.addEventListener("pointermove", (e)=>{
+  if(!drag || !calibrateMode) return;
+  if(Math.abs(e.clientX-drag.startX)+Math.abs(e.clientY-drag.startY)>3) drag.moved = true;
+  const local = screenDragToLocal(e.clientX, e.clientY, drag.partId);
+  if(!local) return;
+  const m = hotMarkers.find(h=>h.id===drag.partId);
+  if(m){ m.local.copy(local); }
+  if(drag.live) drag.live.textContent = `${local.x.toFixed(2)}, ${local.y.toFixed(2)}, ${local.z.toFixed(2)}`;
+  projectHotspots();
+});
+window.addEventListener("pointerup", (e)=>{
+  if(!drag) return;
+  const d = drag; drag = null;
+  controls.enabled = true;
+  const local = screenDragToLocal(e.clientX, e.clientY, d.partId) || (hotMarkers.find(h=>h.id===d.partId)||{}).local;
+  if(local) setPartXYZ(d.partId, local.x, local.y, local.z);
+  if(!d.moved) selectPart(d.partId);
+  else rebuildHotspots();
+});
+
+// click mesh in calibrate: re-place current part or nearest? Spec: click-to-place on mesh.
+// We place the currently selected part; if none, ignore (do not create new).
+$("c3d").addEventListener("pointerdown", (e)=>{
+  if(!calibrateMode) return;
+  if(e.button !== 0) return;
+  // let hotspot handler take precedence
+  if(e.target.closest && e.target.closest(".hot3d")) return;
+});
+$("stage").addEventListener("click", (e)=>{
+  if(!calibrateMode) return;
+  if(e.target.closest && e.target.closest(".hot3d")) return;
+  if(!state.currentPart) return; // empty does not create; need a selected part to re-place
+  const local = screenToLocalOnMesh(e.clientX, e.clientY);
+  if(!local) return; // sky click: no-op
+  setPartXYZ(state.currentPart, local.x, local.y, local.z);
+  rebuildHotspots();
+});
+
+function openModal(kind){
+  const modal = $("modal");
+  const title = $("modalTitle");
+  const img = $("modalImg");
+  const vocab = $("modalVocab");
+  vocab.innerHTML = "";
+  if(kind==="wing"){
+    title.textContent = "机翼结构剖视（教材 1–8）";
+    img.src = "素材/真实机身图/cutaways/user-wing-structure-labeled.png";
+    WING_VOCAB.forEach(([a,b])=>{ const el=document.createElement("div"); el.innerHTML=`<b>${a}</b><br>${b}`; vocab.appendChild(el); });
+  } else {
+    title.textContent = "机身结构剖视（教材 1–5）";
+    img.src = "素材/真实机身图/cutaways/user-fuselage-structure-labeled.png";
+    FUSE_VOCAB.forEach(([a,b])=>{ const el=document.createElement("div"); el.innerHTML=`<b>${a}</b><br>${b}`; vocab.appendChild(el); });
+  }
+  modal.classList.add("show");
+}
+
+window.__fw3d = {
+  get camera(){ return camera; },
+  get group(){ return acGroup; },
+  get bbox(){ return lastBBox; },
+  get currentAircraft(){ return state.ac; },
+  parts: ()=>partsResolved(),
+  pick: (x,y)=>{
+    const p=screenToLocalOnMesh(x,y);
+    return p ? {x:p.x,y:p.y,z:p.z} : null;
+  }
+};
+
+// wire
+document.querySelectorAll("#acTabs button").forEach(b=>b.onclick=()=>setAircraft(b.dataset.ac));
+document.querySelectorAll("#pathSteps .step").forEach(b=>b.onclick=()=>setAircraft(b.dataset.step));
+$("btnNextAc").onclick = ()=>{ const i=ORDER.indexOf(state.ac); setAircraft(ORDER[(i+1)%ORDER.length]); };
+$("btnReset").onclick = ()=>{ state.done[state.ac]=new Set(); state.currentPart=null; renderUI(); rebuildHotspots(); };
+$("btnWing").onclick = ()=>openModal("wing");
+$("btnFuse").onclick = ()=>openModal("fuse");
+$("modalClose").onclick = ()=>$("modal").classList.remove("show");
+$("modal").onclick = (e)=>{ if(e.target.id==="modal") $("modal").classList.remove("show"); };
+$("btnCalibrate").onclick = ()=>{
+  calibrateMode = !calibrateMode;
+  if(calibrateMode) autoRotate = false;
+  $("btnAutoRot").classList.toggle("on", autoRotate);
+  rebuildHotspots();
+};
+$("btnAutoRot").onclick = ()=>{
+  autoRotate = !autoRotate;
+  $("btnAutoRot").classList.toggle("on", autoRotate);
+};
+$("btnResetCam").onclick = ()=>{ if(acGroup) fitCameraToObject(acGroup); };
+document.querySelectorAll("[data-view]").forEach(btn=>{
+  btn.onclick=()=>setCameraView(btn.dataset.view);
+});
+$("btnExportHot").onclick = ()=>{
+  const payload = { version:1, key:LS_KEY, exportedAt:new Date().toISOString(), overrides };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "hotspots-3d-override.json";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+};
+$("btnImportHot").onclick = ()=>$("importHotFile").click();
+$("importHotFile").onchange = (e)=>{
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      const map = data.overrides || data;
+      if(typeof map !== "object" || Array.isArray(map)) throw new Error("格式不对");
+      overrides = map; saveOverrides(); rebuildHotspots();
+      alert("已导入三维标定（" + Object.keys(overrides).length + " 机）");
+    }catch(err){ alert("导入失败：" + err.message); }
+    e.target.value = "";
+  };
+  reader.readAsText(f);
+};
+$("btnResetHot").onclick = ()=>{
+  delete overrides[overrideKey()];
+  saveOverrides();
+  if(lastBBox) bakeDefaultHotspots(state.ac, lastBBox);
+  rebuildHotspots();
+  alert("已清除本机本地标定，恢复为本版默认点位（按当前模型包围盒）。若仍飘，请确认模型状态为「GLB 已加载」。");
+};
+
+initThree();
+if(location.protocol === "file:"){
+  setLoadStatus("fallback", "检测到 file://：本地 GLB 会被浏览器拦截。请改用「打开三维-本地服务.ps1」或 bat。");
+}
+setAircraft("y12");
+</script>
+</body>
+</html>

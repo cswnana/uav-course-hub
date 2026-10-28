@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:," />
+<title>多旋翼的结构与特点 · 三维互动</title>
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --ink:#2B3A55; --ink-deep:#1F2C44;
+  --muted:#5C6B82; --line:#E4DDD0; --red:#C0392B; --green:#2E8B57;
+  --amber:#A56B00; --amber-bg:#FBF3DE; --shadow:0 10px 28px rgba(43,58,85,.10);
+  --sans:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  --serif:"Noto Serif SC","Source Han Serif SC","Songti SC",SimSun,serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  min-height:100%; display:flex; flex-direction:column;
+  background:var(--paper); color:var(--ink); font-family:var(--sans);
+  overflow:hidden;
+}
+button,input{font:inherit; color:inherit}
+button{cursor:pointer}
+header{
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  padding:10px 16px; background:rgba(255,255,255,.92);
+  border-bottom:1px solid var(--line); z-index:5;
+}
+.brand{min-width:220px}
+.brand .kicker{font-size:12px; color:var(--muted); letter-spacing:.04em}
+.brand h1{margin:0; font-family:var(--serif); font-size:22px; font-weight:700; color:var(--ink-deep)}
+.path{display:flex; gap:6px; flex:1; flex-wrap:wrap}
+.path button{
+  border:1px solid var(--line); background:#fff; border-radius:999px;
+  padding:7px 12px; color:var(--muted);
+}
+.path button.on{border-color:var(--ink); color:var(--ink-deep); background:#fff; font-weight:700}
+.path button:disabled{opacity:.45; cursor:default}
+.home{
+  border:0; background:var(--ink-deep); color:#fff; border-radius:10px;
+  padding:9px 14px; font-weight:700;
+}
+.home[hidden]{display:none}
+main{flex:1; min-height:0; display:flex}
+#stage{
+  position:relative; flex:1; min-width:0; min-height:420px; background:var(--paper);
+}
+#c3d{display:block; width:100%; height:100%}
+.banner{
+  position:absolute; left:16px; top:14px;
+  max-width:min(520px, calc(100% - 280px));
+  background:rgba(255,255,255,.94); border:1px solid var(--line);
+  border-radius:12px; padding:9px 12px; color:var(--ink-deep);
+  font-size:13px; line-height:1.5; box-shadow:var(--shadow);
+  pointer-events:none;
+}
+.specs{display:none}
+.specs span,.tools button,.dock button,.enter button,.textbtn{
+  background:#fff; border:1px solid var(--line); border-radius:10px;
+}
+.specs span{padding:5px 8px; font-size:12px; color:var(--muted)}
+.specs b{color:var(--ink-deep); font-weight:700}
+.tools{position:absolute; right:16px; top:12px; display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end}
+.tools button,.textbtn{padding:6px 10px; font-size:13px}
+.tools button.on,.dock button.on,.textbtn.on{border-color:var(--ink); color:var(--ink-deep); font-weight:700}
+.label-layer{position:absolute; inset:0; overflow:hidden; pointer-events:none}
+.part-label{
+  position:absolute; left:0; top:0; transform:translate(-50%,-50%);
+  padding:5px 9px; border:1px solid rgba(43,58,85,.3); border-radius:6px;
+  background:rgba(255,255,255,.95); color:var(--ink-deep); box-shadow:0 3px 12px rgba(43,58,85,.12);
+  font-size:13px; font-weight:700; white-space:nowrap;
+}
+.part-label::after{
+  content:""; position:absolute; left:50%; top:100%; width:1px; height:16px;
+  background:var(--ink); opacity:.65;
+}
+.dock{
+  position:absolute; left:16px; right:16px; bottom:14px;
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px;
+}
+.dock button{
+  text-align:left; padding:10px 12px; box-shadow:var(--shadow); min-height:64px;
+}
+.dock button .nm{display:block; font-weight:800; font-size:16px}
+.dock button .sub{display:block; margin-top:2px; color:var(--muted); font-size:12px; line-height:1.35}
+.dock button.on{background:var(--amber-bg); border-color:var(--ink); box-shadow:0 0 0 1px rgba(43,58,85,.12), var(--shadow)}
+.dock i{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px}
+.enter{
+  position:absolute; left:50%; bottom:96px; transform:translateX(-50%);
+  display:flex; gap:8px; align-items:center;
+}
+.enter[hidden]{display:none}
+.enter button{
+  background:var(--ink-deep); color:#fff; border:0; border-radius:12px;
+  padding:12px 18px; font-weight:800; font-size:16px; box-shadow:var(--shadow);
+}
+#panel{
+  width:360px; flex:none; background:var(--card); border-left:1px solid var(--line);
+  overflow:auto; padding:16px 16px 28px;
+}
+#panel.hidden{display:none}
+#panel.wide{width:min(560px,46vw)}
+.panel-kicker{font-size:12px; letter-spacing:.08em; color:var(--amber); font-weight:700}
+#panel h2{font-family:var(--serif); font-size:26px; margin:4px 0 8px; color:var(--ink-deep)}
+#panel .lead{margin:0 0 12px; line-height:1.65; font-size:14px}
+.part-list{display:flex; flex-direction:column; gap:8px; margin:12px 0}
+.part-list button{
+  text-align:left; background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px;
+}
+.part-list button.on{border-color:var(--ink); background:var(--amber-bg)}
+.part-list strong{display:block}
+.part-list span{display:block; color:var(--muted); font-size:12px; margin-top:3px; line-height:1.45}
+.actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+.actions button{
+  background:var(--ink-deep); color:#fff; border:0; border-radius:10px; padding:10px 12px; font-weight:700;
+}
+.actions button.ghost{background:#fff; color:var(--ink); border:1px solid var(--line)}
+.note{
+  margin-top:12px; padding:10px 12px; background:#F7F4EE; border-radius:12px;
+  font-size:13px; line-height:1.6; color:var(--ink);
+}
+.cards{display:flex; flex-direction:column; gap:12px}
+.card{border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#fff}
+.photo-open{position:relative; display:block; width:100%; padding:0; border:0; background:#EFEAE1; cursor:zoom-in}
+.card img{display:block; width:100%; height:190px; object-fit:contain; background:#EFEAE1}
+.photo-open::after{content:"⤢"; position:absolute; right:8px; bottom:8px; width:30px; height:30px; display:grid; place-items:center; border:1px solid rgba(228,221,208,.9); border-radius:6px; background:rgba(255,255,255,.94); color:var(--ink-deep); font-size:21px; line-height:1; box-shadow:0 2px 8px rgba(43,58,85,.12)}
+.photo-lightbox{position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; background:rgba(20,26,34,.96); color:#fff}
+.photo-lightbox[hidden]{display:none}
+.photo-toolbar{display:flex; align-items:center; justify-content:flex-end; gap:6px; min-height:52px; padding:8px 12px; background:#1F2C44; border-bottom:1px solid rgba(255,255,255,.16)}
+.photo-toolbar button{width:38px; height:38px; padding:0; border:1px solid rgba(255,255,255,.28); border-radius:6px; background:transparent; color:#fff; font-size:21px; line-height:1}
+.photo-toolbar button:hover,.photo-toolbar button:focus-visible{background:rgba(255,255,255,.12)}
+.photo-scroll{flex:1; min-height:0; overflow:auto; display:grid; place-items:center; padding:18px}
+.photo-scroll img{display:block; max-width:min(94vw,1400px); max-height:calc(100vh - 130px); object-fit:contain; transform-origin:center; transition:transform .16s ease}
+.photo-caption{padding:8px 16px 12px; text-align:center; font-size:13px; color:#E8E8E8}
+.photo-open-lock{overflow:hidden!important}
+#photoZoomReset{width:58px; font-size:12px}
+.motion-card{padding:10px 12px 12px}
+.motion-head{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.motion-head h3{margin:0}
+.motion-toggle{flex:none; width:36px; height:36px; padding:0; border:1px solid var(--line); border-radius:6px; background:#fff; font-size:15px}
+.motion-card svg{display:block; width:100%; height:210px; margin-top:4px; background:#F7F4EE; border:1px solid var(--line); border-radius:6px}
+.motion-card p{margin:8px 0 0}
+.motion-card .animated{transform-box:view-box; animation-duration:6s; animation-timing-function:ease-in-out; animation-iteration-count:infinite}
+.motion-card.paused .animated{animation-play-state:paused}
+.fold-fl{transform-origin:150px 80px; animation-name:foldFL}.fold-fr{transform-origin:210px 80px; animation-name:foldFR}
+.fold-bl{transform-origin:150px 145px; animation-name:foldBL}.fold-br{transform-origin:210px 145px; animation-name:foldBR}
+@keyframes foldFL{0%,15%,100%{transform:rotate(0)}55%,80%{transform:rotate(-120deg)}}
+@keyframes foldFR{0%,15%,100%{transform:rotate(0)}55%,80%{transform:rotate(120deg)}}
+@keyframes foldBL{0%,15%,100%{transform:rotate(0)}55%,80%{transform:rotate(120deg)}}
+@keyframes foldBR{0%,15%,100%{transform:rotate(0)}55%,80%{transform:rotate(-120deg)}}
+.inspire-left{transform-origin:150px 100px; animation-name:inspireLeft}.inspire-right{transform-origin:210px 100px; animation-name:inspireRight}
+@keyframes inspireLeft{0%,15%,100%{transform:rotate(0)}55%,80%{transform:rotate(32deg)}}
+@keyframes inspireRight{0%,15%,100%{transform:rotate(0)}55%,80%{transform:rotate(-32deg)}}
+@media (prefers-reduced-motion:reduce){.motion-card .animated{animation-play-state:paused}}
+.card h3{margin:10px 12px 4px; font-size:16px}
+.card p{margin:0 12px 12px; color:var(--muted); font-size:13px; line-height:1.55}
+.card.plain{padding:4px 0 2px}
+.quiz-progress{display:flex; gap:6px; margin:12px 0}
+.quiz-progress i{height:5px; flex:1; background:var(--line); border-radius:3px}
+.quiz-progress i.done{background:var(--green)}
+.quiz-progress i.now{background:var(--amber)}
+.quiz-answer{
+  margin:12px 0; padding:14px; border:1px solid var(--line); border-radius:8px;
+  background:#F7F4EE; line-height:1.65; font-size:14px;
+}
+.quiz-answer.ok{border-color:var(--green); background:#EEF7F0}
+.quiz-answer.no{border-color:var(--red); background:#FCF0ED}
+.quiz-score{font-family:var(--serif); font-size:30px; color:var(--ink-deep); margin:10px 0}
+footer{
+  padding:6px 16px 8px; font-size:11px; line-height:1.45; color:var(--muted);
+  background:#EFEAE1; border-top:1px solid var(--line);
+  white-space:normal; overflow:visible;
+}
+footer p{margin:0 0 3px}
+footer p:last-child{margin-bottom:0}
+@media (max-width:900px){
+  html,body{height:auto; min-height:100%}
+  body{overflow:auto}
+  main{display:block; flex:none}
+  #stage{height:68vh; min-height:420px}
+  #panel,#panel.wide{width:auto; border-left:0; border-top:1px solid var(--line); overflow:visible}
+  .specs{display:none}
+  .banner{right:12px; top:58px}
+  .tools{top:8px; right:8px; left:auto}
+  header{position:sticky; top:0}
+}
+@media (max-width:620px){
+  header{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 10px; padding:9px 12px}
+  .brand{min-width:0}
+  .brand h1{font-size:18px}
+  .brand .kicker{font-size:11px}
+  .path{grid-column:1/-1; grid-row:2; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px}
+  .path button{padding:6px 3px; font-size:12px; white-space:nowrap}
+  .home{grid-column:2; grid-row:1; padding:8px 10px; white-space:nowrap}
+  .dock{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .enter{left:16px; right:16px; transform:none; bottom:148px}
+  .enter button{width:100%}
+  .specs{display:none}
+  #stage{height:62vh; min-height:430px}
+}
+@media (max-width:390px){
+  html,body{overflow-x:hidden; max-width:100vw}
+  .tools{top:8px; right:8px; z-index:6; flex-wrap:nowrap; max-width:calc(100% - 16px)}
+  .tools button{padding:5px 8px; font-size:12px}
+  .banner{left:10px; right:10px; top:46px; max-width:none; font-size:12px}
+  .dock{gap:6px; bottom:10px}
+  .dock button{min-height:58px; padding:8px 10px}
+  #stage{height:58vh; min-height:340px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="kicker">无人机导论与飞行法规 · 模块二</div>
+    <h1>多旋翼的结构与特点 · 真机网格</h1>
+  </div>
+  <nav class="path" id="path">
+    <button type="button" data-go="whole">1 整机</button>
+    <button type="button" data-go="systems">2 四大系统</button>
+    <button type="button" data-go="parts">3 认零件</button>
+    <button type="button" data-go="compare">4 机型对照</button>
+  </nav>
+  <button type="button" class="home" id="btnHome" hidden>返回整机</button>
+</header>
+<main>
+  <section id="stage">
+    <canvas id="c3d"></canvas>
+    <div class="tools" id="tools">
+      <button type="button" data-view="iso" class="on">斜视</button>
+      <button type="button" data-view="side">侧视</button>
+      <button type="button" data-view="front">前视</button>
+      <button type="button" data-view="top">俯视</button>
+      <button type="button" id="btnLabels" class="on" aria-pressed="true">标签</button>
+      <button type="button" id="btnQuiz">课堂提问</button>
+      <button type="button" id="btnSpinOrbit" class="on">慢转</button>
+    </div>
+    <div class="label-layer" id="labelLayer" aria-hidden="true"></div>
+    <div class="banner" id="banner">正在加载 Cesium Drone 真机网格…</div>
+    <div class="specs" aria-label="模型来源">
+      <span>模型 <b>Cesium Drone</b></span>
+      <span>网格与贴图 <b>Ed Mackey</b></span>
+      <span>授权 <b>CC BY 4.0</b></span>
+    </div>
+    <div class="enter" id="enterFloat" hidden>
+      <button type="button" id="btnEnter">进入拆解</button>
+    </div>
+    <div class="dock" id="dock"></div>
+  </section>
+  <aside id="panel" class="hidden"></aside>
+</main>
+<div class="photo-lightbox" id="photoLightbox" hidden role="dialog" aria-modal="true" aria-label="完整图片查看器">
+  <div class="photo-toolbar">
+    <button type="button" id="photoZoomOut" title="缩小" aria-label="缩小">−</button>
+    <button type="button" id="photoZoomReset" title="恢复原始比例" aria-label="恢复原始比例">1:1</button>
+    <button type="button" id="photoZoomIn" title="放大" aria-label="放大">+</button>
+    <button type="button" id="photoClose" title="关闭" aria-label="关闭">×</button>
+  </div>
+  <div class="photo-scroll" id="photoScroll"><img id="photoFull" alt="" /></div>
+  <div class="photo-caption" id="photoCaption"></div>
+</div>
+<footer>
+      <p><strong>三维主角：Cesium Drone 真机网格，不是 Phantom 4，也不是原厂 CAD。</strong>网格与贴图由 Ed Mackey 制作，Copyright 2017, 2018 Analytical Graphics, Inc.，依 <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> 使用。来源：<a href="https://github.com/CesiumGS/cesium/tree/main/Apps/SampleData/models/CesiumDrone" target="_blank" rel="noopener">CesiumJS 官方示例模型库</a>。外壳、电机、正反桨、天线和镜头来自该 GLB；电池、电调、飞控为内部位置教学示意，不代表原厂内部结构。</p>
+      <p>实物照片用于辨认同类零件，不是这架模型的原厂件。单击高亮，「进入拆解」或双击看零件；淡化后仍留在原位。「课堂提问」用本机即时判定，不记录或上传成绩。</p>
+</footer>
+<script type="importmap">
+{"imports":{"three":"./assets/vendor/three/build/three.module.js","three/addons/":"./assets/vendor/three/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+(function () {
+  var ARM = 12.4;
+  var PHOTOS = {
+    phantom: "素材/真实机身图/multirotor/mr-whole-phantom2-visionplus.jpg",
+    mini: "素材/真实机身图/multirotor/mr-whole-dji-mini3pro-table.jpg",
+    mavic: "素材/真实机身图/multirotor/mr-whole-mavic-air.jpg",
+    fpv: "素材/真实机身图/parts/part-frame-components-teardown.jpg",
+    prop: "素材/真实机身图/parts/part-propeller-side.jpg",
+    motor: "素材/真实机身图/parts/part-brushless-motor-prop.jpg",
+    motorOpen: "素材/真实机身图/parts/part-brushless-motor-disassembled.jpg",
+    esc: "素材/真实机身图/parts/part-esc-blheli-12a.jpg",
+    battery: "素材/真实机身图/parts/part-lipo-fpv-battery.jpg",
+    fc: "素材/真实机身图/parts/part-gps-flight-controller.jpg",
+    gimbal: "素材/真实机身图/parts/part-camera-gimbal-yuneec.jpg",
+    inspire: "素材/真实机身图/multirotor/mr-dji-inspire-1-karlis-dambrans.jpg",
+    agri: "素材/真实机身图/multirotor/mr-dji-agriculture-agritechnica-matti-blume.jpg",
+    agriSpray: "素材/真实机身图/multirotor/mr-agricultural-spraying-shreesha-sharma.jpg",
+    delivery: "素材/真实机身图/multirotor/mr-flytrex-delivery-hadasbandel.jpg",
+    thermal: "素材/真实机身图/parts/part-dji-mavic-3t-thermal-zlea.jpg"
+  };
+  var SYSTEMS = [
+    {
+      id: "frame", name: "机架", sub: "中心板 · 机臂 · 起落架", color: "#2B3A55",
+      lead: "机架是骨架：中心板把四条机臂和起落架连成一架飞机。",
+      why: "机臂把电机送出去，相邻的桨才不会打在一起。起落架把机身撑离地面，云台才有地方转。",
+      parts: [
+        { id: "shell", name: "中心板", keys: ["shell"], note: "也就是机身壳。飞控和电池待在里面，四条机臂从这里伸出去。" },
+        { id: "arms", name: "机臂", keys: ["arms"], note: "这架是固定机臂。轴距是对角两只电机轴线之间的距离，机臂本身不叫轴。此模型未提供官方尺寸，页面不虚构毫米数。" },
+        { id: "gear", name: "起落架", keys: ["gear"], note: "橇式脚架负责落地时的缓冲，也决定云台离地还剩多少高度。" }
+      ]
+    },
+    {
+      id: "power", name: "动力系统", sub: "电池 → 电调 → 电机 → 桨", color: "#A56B00",
+      lead: "动力链就这一条：电池供电，电调把直流变成三相电，电机转，螺旋桨推空气。",
+      why: "导论先把顺序认熟。桨和电机怎么配对、电调怎么换相，留给《结构与系统》。",
+      parts: [
+        { id: "battery", name: "电池", keys: ["battery"], note: "电能仓库，放在机身里、靠近重心。它也是一块可移动的配重。" },
+        { id: "esc", name: "电调", keys: ["esc"], note: "夹在电池和电机之间，听飞控的指令改转速。消费级整机里它常常藏在机臂或机壳里，拆开才看得见。" },
+        { id: "motors", name: "电机", keys: ["motors"], note: "四只无刷电机装在机臂末端。这里只认位置，不讲里面的磁铁和线圈。" },
+        { id: "props", name: "螺旋桨", keys: ["props"], note: "正反桨对角配对，相邻的桨转向相反，用来抵消扭矩。两叶最常见。" }
+      ]
+    },
+    {
+      id: "fc", name: "飞控系统", sub: "测什么，起什么作用", color: "#2E8B57",
+      lead: "飞控是大脑，通常在机身中心附近。传感器告诉它：转得有多快、倾斜了没有、高度和航向。",
+      why: "陀螺仪和加速度计通常做在同一颗 IMU 里。GPS 常常是独立模块。算法怎么算，这页不展开。",
+      parts: [
+        { id: "imu", name: "IMU：陀螺仪 + 加速度计", keys: ["fc"], note: "两样通常在同一颗惯性测量芯片里。陀螺仪测转动快慢，加速度计测倾斜和加速度。这架教学机只亮整块飞控板，不在板上假点芯片脚位。" },
+        { id: "baro", name: "气压计", keys: ["fc"], note: "也在飞控板上。它测气压变化，用来估计高度变化。阵风和气流会让这个读数抖，所以不能单靠它。" },
+        { id: "mag", name: "罗盘（磁力计）", keys: ["fc"], note: "测地磁方向，帮助判断机头朝哪。电机和电池的磁场会干扰它，所以安装位置要避开大电流。" },
+        { id: "gps", name: "天线 / 卫星定位", keys: ["gps"], note: "真机网格提供的是外部天线；卫星定位模块通常在机身内部独立安装。这里借天线讲外部链路位置，不把天线本身冒称为完整 GPS 模块。" }
+      ]
+    },
+    {
+      id: "payload", name: "外部载荷", sub: "眼睛，和另一只手", color: "#C0392B",
+      lead: "载荷挂在飞机外面，干飞行本身以外的事。可以分成感知类和作业类。",
+      why: "感知类是眼睛：可见光相机、热成像。作业类是另一只手：喷洒、抛投、吊运。挂点多在机腹，吊运则尽量对准重心。",
+      parts: [
+        { id: "camera", name: "相机镜头（感知类）", keys: ["camera"], note: "真机网格包含前下方镜头。这里用它认感知载荷的位置；此 GLB 未单独建出完整云台结构，不把镜头说成已核验的原厂云台。" }
+      ]
+    }
+  ];
+  var INSIDE = { battery: 1, esc: 1, fc: 1 };
+  var state = { layer: "whole", system: null, part: null };
+  var quiz = { active: false, index: 0, answered: false, correct: 0, attempts: 0, picks: [] };
+  var QUESTIONS = [
+    { system: "frame", part: "arms", prompt: "找出「机臂」：它把电机送离中心，给相邻桨盘留出空间。", why: "机臂连接中心板与电机。轴距量的是对角电机轴线，不是机臂长度。" },
+    { system: "power", part: "esc", prompt: "动力链中，谁接收飞控指令并改变电机转速？请点出这个零件。", why: "电调夹在电池与电机之间。电池供电，飞控发指令，电调执行转速调节。" },
+    { system: "fc", part: "imu", prompt: "飞机要知道自己是否倾斜、转得多快，主要依靠哪块板上的 IMU？", why: "陀螺仪和加速度计通常集成在飞控板的 IMU 中；这页只点整块飞控，不假标芯片脚位。" },
+    { system: "fc", part: "gps", prompt: "找出独立于飞控板、帮助确定位置与航向的卫星模块。", why: "GPS 模块通常独立安装。它提供卫星定位信息，不等同于测量姿态角速度的陀螺仪。" },
+    { system: "payload", part: "camera", prompt: "航拍任务中，哪个外部载荷负责看见地面，并由云台增稳？", why: "云台相机属于感知类载荷，装在机腹前方；喷洒、抛投等则属于作业类载荷。" },
+    { system: "frame", part: "gear", prompt: "最后找一找：落地时支撑机体、给机腹云台留出离地间隙的是谁？", why: "起落架承担落地支撑与缓冲，也影响机腹载荷的离地空间。" }
+  ];
+  var labelsOn = true;
+  var labelDefs = {
+    shell: { text: "中心板", at: [0, 3.8, 0] },
+    arms: { text: "机臂", at: [-8, 2.1, -8] },
+    gear: { text: "起落架", at: [6.4, -2.5, 3.5] },
+    battery: { text: "电池", at: [0, 1.8, 1] },
+    esc: { text: "电调", at: [5.2, 1.4, 5.2] },
+    motors: { text: "电机", at: [-12.4, 3.2, -12.4] },
+    props: { text: "螺旋桨", at: [12.4, 3.5, 12.4] },
+    imu: { text: "飞控板 · IMU", at: [0, 2.2, 0] },
+    baro: { text: "飞控板 · 气压计", at: [0, 2.2, 0] },
+    mag: { text: "飞控板 · 罗盘", at: [0, 2.2, 0] },
+    gps: { text: "外部天线", at: [0, 4.5, 0.85] },
+    camera: { text: "相机镜头", at: [0, -2.4, -5.5] }
+  };
+  var labelNodes = {};
+  var seqTimer = null;
+  var spinUntil = 0;
+  var autoOrbit = true;
+  var PARTS = {};
+  var axisGroup;
+  var props = [];
+  var renderer, scene, camera, drone;
+  var lookAt = new THREE.Vector3(0, 0.15, 0);
+  var view = { theta: 2.45, phi: 1.08, radius: 92 };
+  var viewGoal = { theta: 2.45, phi: 1.08, radius: 92 };
+  var CAM = {
+    iso: { theta: 2.45, phi: 1.08, radius: 92 },
+    side: { theta: Math.PI / 2, phi: 1.22, radius: 96 },
+    front: { theta: Math.PI, phi: 1.16, radius: 94 },
+    top: { theta: 0.55, phi: 0.36, radius: 104 },
+    frame: { theta: 2.35, phi: 1.16, radius: 88 },
+    power: { theta: 2.7, phi: 1.14, radius: 84 },
+    fc: { theta: 0.7, phi: 0.52, radius: 86 },
+    payload: { theta: Math.PI / 2 + 0.15, phi: 1.12, radius: 82 },
+    parts: { dRadius: -8, dPhi: -0.03 }
+  };
+  var ORBIT_SPEED = (Math.PI * 2) / (18 * 60);
+  var camSmoothTau = 380;
+  var lastFrame = performance.now();
+  var drag = null;
+  var userPausedOrbit = false;
+  var lastClick = { id: "", t: 0 };
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function sysById(id) {
+    for (var i = 0; i < SYSTEMS.length; i++) if (SYSTEMS[i].id === id) return SYSTEMS[i];
+    return null;
+  }
+  function partById(sys, id) {
+    if (!sys) return null;
+    for (var i = 0; i < sys.parts.length; i++) if (sys.parts[i].id === id) return sys.parts[i];
+    return null;
+  }
+  function ownerOfMesh(meshId) {
+    for (var i = 0; i < SYSTEMS.length; i++) {
+      var s = SYSTEMS[i];
+      for (var j = 0; j < s.parts.length; j++) {
+        var keys = s.parts[j].keys;
+        if (keys.length === 1 && keys[0] === meshId && s.parts[j].id === meshId) return { system: s.id, part: s.parts[j].id };
+      }
+    }
+    if (meshId === "fc") return { system: "fc", part: "imu" };
+    return null;
+  }
+
+  function stopSeq() {
+    if (seqTimer) clearTimeout(seqTimer);
+    seqTimer = null;
+  }
+  function visibleLabelIds() {
+    if (!labelsOn || quiz.active || state.layer === "atlas" || state.layer === "compare" || !state.system) return [];
+    var sys = sysById(state.system);
+    if (!sys) return [];
+    if (state.part && labelDefs[state.part]) return [state.part];
+    return sys.parts.map(function (p) { return p.id; }).filter(function (id) { return !!labelDefs[id]; });
+  }
+  function updateLabels() {
+    var visible = visibleLabelIds();
+    Object.keys(labelNodes).forEach(function (id) { labelNodes[id].style.display = "none"; });
+    var w = $("stage").clientWidth, h = $("stage").clientHeight;
+    visible.forEach(function (id) {
+      var def = labelDefs[id];
+      var node = labelNodes[id];
+      if (!node) {
+        node = el("div", "part-label", def.text);
+        $("labelLayer").appendChild(node);
+        labelNodes[id] = node;
+      }
+      var v = new THREE.Vector3(def.at[0], def.at[1], def.at[2]).project(camera);
+      var x = (v.x * 0.5 + 0.5) * w;
+      var y = (-v.y * 0.5 + 0.5) * h - 20;
+      var inFrame = v.z > -1 && v.z < 1 && x > 42 && x < w - 42 && y > 54 && y < h - 108;
+      node.style.display = inFrame ? "block" : "none";
+      node.style.left = x + "px";
+      node.style.top = y + "px";
+    });
+  }
+  function goals() {
+    var g = {};
+    Object.keys(PARTS).forEach(function (id) { g[id] = 0; });
+    var sys = sysById(state.system);
+    if (quiz.active) {
+      var q = QUESTIONS[quiz.index];
+      Object.keys(PARTS).forEach(function (id) {
+        g[id] = INSIDE[id] ? 0 : 1;
+      });
+      if (q && q.part === "esc") { g.esc = 1; g.shell = 0.28; }
+      if (q && q.part === "imu") { g.fc = 1; g.shell = 0.28; }
+      return g;
+    }
+    var focus = {};
+    if (!sys || state.layer === "compare") {
+      Object.keys(PARTS).forEach(function (id) { g[id] = INSIDE[id] ? 0 : 1; });
+      return g;
+    } else if (!state.part || state.layer === "whole") {
+      sys.parts.forEach(function (p) { p.keys.forEach(function (k) { focus[k] = 1; }); });
+    } else {
+      var p = partById(sys, state.part);
+      (p ? p.keys : []).forEach(function (k) { focus[k] = 1; });
+    }
+    var open = sys && (sys.id === "power" || sys.id === "fc");
+    Object.keys(PARTS).forEach(function (id) {
+      if (!sys) { g[id] = INSIDE[id] ? 0 : 1; return; }
+      var mine = false;
+      sys.parts.forEach(function (p) { if (p.keys.indexOf(id) >= 0) mine = true; });
+      if (INSIDE[id] && !mine) { g[id] = 0; return; }
+      if ((id === "shell" || id === "arms") && open && !focus[id]) { g[id] = 0.28; return; }
+      if (focus[id]) g[id] = 1;
+      else if (INSIDE[id]) g[id] = mine ? 0.55 : 0;
+      else g[id] = 0.38;
+    });
+    return g;
+  }
+
+  var PAPER = new THREE.Color(0xF5F1E8);
+  function paint(group, opacity, hot) {
+    group.traverse(function (obj) {
+      if (!obj.isMesh || !obj.material) return;
+      var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+      mats.forEach(function (mat) {
+        if (mat.color && !mat.userData.baseColor) mat.userData.baseColor = mat.color.clone();
+        var seeThrough = opacity < 0.98;
+        if (mat.transparent !== seeThrough) {
+          mat.transparent = seeThrough;
+          mat.needsUpdate = true;
+        }
+        mat.opacity = opacity;
+        mat.depthWrite = opacity > 0.55;
+        if (mat.color && mat.userData.baseColor) {
+          mat.color.copy(mat.userData.baseColor);
+          if (!hot) mat.color.lerp(PAPER, 0.72);
+        }
+        if (mat.emissive) {
+          mat.emissive.setHex(0x000000);
+          mat.emissiveIntensity = 0;
+        }
+      });
+    });
+  }
+
+  function mesh(geo, mat, x, y, z) {
+    var m = new THREE.Mesh(geo, mat.clone());
+    if (x !== undefined) m.position.set(x, y, z);
+    m.castShadow = true;
+    return m;
+  }
+  function addPart(id, m) {
+    m.userData.part = id;
+    m.traverse(function (ch) { if (ch.isMesh) ch.userData.part = id; });
+    PARTS[id].group.add(m);
+    return m;
+  }
+  function ellipsoid(id, mat, x, y, z, sx, sy, sz) {
+    var m = mesh(new THREE.SphereGeometry(1, 40, 28), mat, x, y, z);
+    m.scale.set(sx, sy, sz);
+    return addPart(id, m);
+  }
+  function rod(id, a, b, radius, mat) {
+    var av = new THREE.Vector3(a[0], a[1], a[2]);
+    var bv = new THREE.Vector3(b[0], b[1], b[2]);
+    var delta = bv.clone().sub(av);
+    var m = mesh(new THREE.CylinderGeometry(radius, radius, Math.max(delta.length(), 0.01), 16), mat);
+    m.position.copy(av).add(bv).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.clone().normalize());
+    return addPart(id, m);
+  }
+  function cable(id, points, radius, mat) {
+    var curve = new THREE.CatmullRomCurve3(points.map(function (p) { return new THREE.Vector3(p[0], p[1], p[2]); }));
+    return addPart(id, mesh(new THREE.TubeGeometry(curve, 28, radius, 8, false), mat));
+  }
+  function propShape() {
+    var s = new THREE.Shape();
+    s.moveTo(0.55, -0.22);
+    s.bezierCurveTo(3.2, -0.55, 7.0, -0.72, 10.8, -0.38);
+    s.quadraticCurveTo(11.6, -0.05, 10.6, 0.28);
+    s.bezierCurveTo(6.8, 0.62, 3.1, 0.55, 0.55, 0.22);
+    s.closePath();
+    return new THREE.ExtrudeGeometry(s, {
+      depth: 0.055, bevelEnabled: true, bevelSize: 0.018, bevelThickness: 0.012, bevelSegments: 1, steps: 1
+    });
+  }
+
+  function buildDroneSchematicBackup() {
+    ["shell", "arms", "gear", "battery", "esc", "motors", "props", "fc", "gps", "camera"].forEach(function (id) {
+      var g = new THREE.Group();
+      g.name = id;
+      drone.add(g);
+      PARTS[id] = { group: g, opacity: INSIDE[id] ? 0 : 1 };
+    });
+    var white = new THREE.MeshStandardMaterial({ color: 0xF3F0E8, roughness: 0.52, metalness: 0.05 });
+    var armM = new THREE.MeshStandardMaterial({ color: 0xE3DDD0, roughness: 0.58, metalness: 0.04 });
+    var dark = new THREE.MeshStandardMaterial({ color: 0x3A454D, roughness: 0.46, metalness: 0.22 });
+    var seam = new THREE.MeshStandardMaterial({ color: 0xB8B0A4, roughness: 0.65, metalness: 0.08 });
+    var silver = new THREE.MeshStandardMaterial({ color: 0x9AA3AA, roughness: 0.35, metalness: 0.58 });
+    var red = new THREE.MeshStandardMaterial({ color: 0xC0392B, roughness: 0.48, metalness: 0.06 });
+    var propM = new THREE.MeshStandardMaterial({ color: 0x343C42, roughness: 0.62, metalness: 0.06, side: THREE.DoubleSide });
+    var bat = new THREE.MeshStandardMaterial({ color: 0x2E6F73, roughness: 0.54, metalness: 0.1 });
+    var fcM = new THREE.MeshStandardMaterial({ color: 0x2E8B57, roughness: 0.48, metalness: 0.06 });
+    var escM = new THREE.MeshStandardMaterial({ color: 0xC88600, roughness: 0.5, metalness: 0.1 });
+    var gpsM = new THREE.MeshStandardMaterial({ color: 0xF5F1E8, roughness: 0.42, metalness: 0.06 });
+    var glassM = new THREE.MeshStandardMaterial({ color: 0x142830, roughness: 0.12, metalness: 0.55 });
+
+    ellipsoid("shell", white, 0, 0.05, 0.1, 7.6, 1.45, 5.7);
+    ellipsoid("shell", white, 0, 1.25, -0.05, 6.7, 1.55, 5.05);
+    var seamRing = mesh(new THREE.TorusGeometry(6.35, 0.09, 8, 64), seam, 0, 0.95, 0.05);
+    seamRing.rotation.x = Math.PI / 2;
+    addPart("shell", seamRing);
+    addPart("shell", mesh(new THREE.BoxGeometry(3.4, 0.1, 1.15), red, 0, 2.55, -1.7));
+    [-1, 1].forEach(function (side) {
+      var eye = addPart("shell", mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.14, 18), dark, side * 2.35, 0.35, -5.35));
+      eye.rotation.x = Math.PI / 2;
+    });
+
+    addPart("fc", mesh(new THREE.BoxGeometry(4.2, 0.28, 3.6), fcM, 0, 0.55, 0.1));
+    addPart("fc", mesh(new THREE.BoxGeometry(1.05, 0.16, 1.05), dark, 0.4, 0.76, 0));
+    addPart("battery", mesh(new THREE.BoxGeometry(5.4, 1.15, 4.6), bat, 0, -0.15, 1.05));
+    addPart("gps", mesh(new THREE.CylinderGeometry(1.05, 1.12, 0.28, 28), gpsM, 0, 2.72, 0.85));
+    addPart("gps", mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.08, 18), dark, 0, 2.9, 0.85));
+
+    var motors = [
+      { x: -ARM, z: -ARM, spin: 1, front: true },
+      { x: ARM, z: -ARM, spin: -1, front: true },
+      { x: -ARM, z: ARM, spin: -1, front: false },
+      { x: ARM, z: ARM, spin: 1, front: false }
+    ];
+    var bladeGeo = propShape();
+    var GROUND_Y = -3.55;
+    motors.forEach(function (mt) {
+      var ex = mt.x * 0.42, ez = mt.z * 0.42;
+      var board = mesh(new THREE.BoxGeometry(1.25, 0.16, 1.7), escM, ex, 0.15, ez);
+      board.rotation.y = Math.atan2(mt.x, mt.z);
+      addPart("esc", board);
+      cable("esc", [[0, 0.05, 0.4], [ex * 0.7, 0.2, ez * 0.7], [ex, 0.15, ez]], 0.06, dark);
+      var curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(mt.x * 0.46, 0.55, mt.z * 0.46),
+        new THREE.Vector3(mt.x * 0.72, 0.72, mt.z * 0.72),
+        new THREE.Vector3(mt.x * 0.92, 0.95, mt.z * 0.92)
+      ]);
+      addPart("arms", mesh(new THREE.TubeGeometry(curve, 20, 0.72, 12, false), armM));
+      if (mt.front) {
+        var stripe = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(mt.x * 0.62, 1.28, mt.z * 0.62),
+          new THREE.Vector3(mt.x * 0.78, 1.42, mt.z * 0.78)
+        ]);
+        addPart("arms", mesh(new THREE.TubeGeometry(stripe, 6, 0.16, 8, false), red));
+      }
+      addPart("motors", mesh(new THREE.CylinderGeometry(1.35, 1.48, 0.78, 28), dark, mt.x, 1.05, mt.z));
+      addPart("motors", mesh(new THREE.CylinderGeometry(1.22, 1.22, 0.28, 28), silver, mt.x, 1.52, mt.z));
+      addPart("motors", mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.42, 10), silver, mt.x, 1.82, mt.z));
+      var pg = new THREE.Group();
+      pg.position.set(mt.x, 2.02, mt.z);
+      pg.userData.part = "props";
+      pg.userData.spin = mt.spin;
+      [0, Math.PI].forEach(function (a) {
+        var blade = mesh(bladeGeo, propM, 0, 0, 0);
+        blade.rotation.x = Math.PI / 2 + 0.02;
+        blade.rotation.z = a;
+        blade.userData.part = "props";
+        pg.add(blade);
+      });
+      var hub = mesh(new THREE.CylinderGeometry(0.42, 0.48, 0.18, 20), dark, 0, 0.06, 0);
+      hub.userData.part = "props";
+      pg.add(hub);
+      addPart("props", pg);
+      props.push(pg);
+    });
+
+    [-1, 1].forEach(function (sd) {
+      [-1.4, 1.4].forEach(function (z) {
+        rod("gear", [sd * 4.6, -1.15, z], [sd * 6.3, GROUND_Y + 0.08, z * 1.15], 0.34, white);
+      });
+      rod("gear", [sd * 6.3, GROUND_Y + 0.08, -4.6], [sd * 6.3, GROUND_Y + 0.08, 4.8], 0.42, white);
+      [-4.1, 4.3].forEach(function (z) {
+        addPart("gear", mesh(new THREE.SphereGeometry(0.36, 14, 10), dark, sd * 6.3, GROUND_Y + 0.02, z));
+      });
+    });
+
+    var gimbalY = -1.35;
+    addPart("camera", mesh(new THREE.BoxGeometry(1.35, 0.42, 1.15), dark, 0, gimbalY, -3.15));
+    var ring = mesh(new THREE.TorusGeometry(1.15, 0.11, 10, 28), silver, 0, gimbalY - 0.7, -3.7);
+    ring.rotation.y = Math.PI / 2;
+    addPart("camera", ring);
+    addPart("camera", mesh(new THREE.BoxGeometry(2.15, 1.55, 1.7), white, 0, gimbalY - 1.45, -4.15));
+    var lens = mesh(new THREE.CylinderGeometry(0.72, 0.78, 0.48, 24), dark, 0, gimbalY - 1.45, -5.15);
+    lens.rotation.x = Math.PI / 2;
+    addPart("camera", lens);
+    var glass = mesh(new THREE.CircleGeometry(0.55, 24), glassM, 0, gimbalY - 1.45, -5.42);
+    addPart("camera", glass);
+
+    axisGroup = new THREE.Group();
+    var d = ARM * Math.SQRT2 * 2;
+    var bar = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, d), new THREE.MeshBasicMaterial({ color: 0xC0392B }));
+    bar.position.set(0, 2.7, 0);
+    bar.rotation.y = Math.PI / 4;
+    axisGroup.add(bar);
+    axisGroup.visible = false;
+    drone.add(axisGroup);
+  }
+
+  async function buildDrone() {
+    ["shell", "arms", "gear", "battery", "esc", "motors", "props", "fc", "gps", "camera"].forEach(function (id) {
+      var g = new THREE.Group();
+      g.name = id;
+      drone.add(g);
+      PARTS[id] = { group: g, opacity: INSIDE[id] ? 0 : 1 };
+    });
+
+    var gltf = await new GLTFLoader().loadAsync("assets/models/cesium-drone.glb");
+    var model = gltf.scene;
+    var scale = 7.3;
+    model.scale.setScalar(scale);
+    model.updateMatrixWorld(true);
+    var bounds = new THREE.Box3().setFromObject(model);
+    var groundY = -3.55;
+    var lift = groundY - bounds.min.y;
+    Object.keys(PARTS).forEach(function (id) {
+      PARTS[id].group.scale.setScalar(scale);
+      PARTS[id].group.rotation.y = Math.PI;
+      PARTS[id].group.position.y = lift;
+    });
+
+    var meshCount = 0;
+    var triangleCount = 0;
+    model.children.slice().forEach(function (node) {
+      var name = node.name || "";
+      var id = null;
+      if (/^Motor/.test(name)) id = "motors";
+      else if (/^Prop/.test(name)) id = "props";
+      else if (/^Body/.test(name)) id = "arms";
+      else if (/^Base/.test(name)) id = "gear";
+      else if (/^Lens/.test(name)) id = "camera";
+      else if (/^Antenna/.test(name)) id = "gps";
+      if (!id) return;
+      node.traverse(function (obj) {
+        if (!obj.isMesh) return;
+        meshCount += 1;
+        triangleCount += (obj.geometry.index ? obj.geometry.index.count : obj.geometry.attributes.position.count) / 3;
+        obj.castShadow = true;
+        obj.receiveShadow = true;
+        obj.material = Array.isArray(obj.material)
+          ? obj.material.map(function (m) { return m.clone(); })
+          : obj.material.clone();
+        var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        mats.forEach(function (m) {
+          if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+          if ("metalness" in m) m.metalness = Math.min(m.metalness, 0.35);
+          if ("roughness" in m) m.roughness = Math.max(m.roughness, 0.42);
+        });
+      });
+      addPart(id, node);
+      if (id === "props") {
+        node.userData.spin = /CounterClockwise/.test(name) ? 1 : -1;
+        props.push(node);
+      }
+    });
+    if (meshCount < 10) throw new Error("真机网格部件不完整，仅识别到 " + meshCount + " 个网格");
+
+    // These three hidden parts are explicitly labelled teaching schematics.
+    var dark = new THREE.MeshStandardMaterial({ color: 0x3A454D, roughness: 0.55, metalness: 0.15 });
+    var bat = new THREE.MeshStandardMaterial({ color: 0x2E6F73, roughness: 0.54, metalness: 0.1 });
+    var fcM = new THREE.MeshStandardMaterial({ color: 0x2E8B57, roughness: 0.48, metalness: 0.06 });
+    var escM = new THREE.MeshStandardMaterial({ color: 0xC88600, roughness: 0.5, metalness: 0.1 });
+    addPart("fc", mesh(new THREE.BoxGeometry(0.58, 0.05, 0.52), fcM, 0, 0.1, 0));
+    addPart("fc", mesh(new THREE.BoxGeometry(0.16, 0.04, 0.16), dark, 0.04, 0.15, 0));
+    addPart("battery", mesh(new THREE.BoxGeometry(0.78, 0.22, 0.62), bat, 0, -0.08, 0.12));
+    [[0.48, 0.04, 0.58], [-0.48, 0.04, 0.58], [0.48, 0.04, -0.5], [-0.48, 0.04, -0.5]].forEach(function (p) {
+      addPart("esc", mesh(new THREE.BoxGeometry(0.18, 0.04, 0.24), escM, p[0], p[1], p[2]));
+    });
+
+    axisGroup = new THREE.Group();
+    var d = ARM * Math.SQRT2 * 2;
+    var bar = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, d), new THREE.MeshBasicMaterial({ color: 0xC0392B }));
+    bar.position.set(0, 2.7, 0);
+    bar.rotation.y = Math.PI / 4;
+    axisGroup.add(bar);
+    axisGroup.visible = false;
+    drone.add(axisGroup);
+    window.__mrModelInfo = { source: "glb", model: "Cesium Drone", meshCount: meshCount, triangles: triangleCount, author: "Ed Mackey", license: "CC BY 4.0" };
+  }
+
+  async function init() {
+    var canvas = $("c3d");
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0xF5F1E8, 1);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(36, 1, 0.1, 400);
+    scene.add(new THREE.HemisphereLight(0xF7F4EE, 0xD8D0C4, 0.52));
+    var sun = new THREE.DirectionalLight(0xFFF8F0, 0.76);
+    sun.position.set(18, 26, 14);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.camera.near = 4;
+    sun.shadow.camera.far = 80;
+    sun.shadow.camera.left = -28;
+    sun.shadow.camera.right = 28;
+    sun.shadow.camera.top = 28;
+    sun.shadow.camera.bottom = -28;
+    scene.add(sun);
+    var fill = new THREE.DirectionalLight(0xF0EDE6, 0.28);
+    fill.position.set(-14, 10, -12);
+    scene.add(fill);
+    var groundY = -3.55;
+    var ground = new THREE.Mesh(
+      new THREE.CircleGeometry(26, 56),
+      new THREE.MeshStandardMaterial({ color: 0xCFC8BA, roughness: 0.96, metalness: 0 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = groundY;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    var shade = new THREE.Mesh(
+      new THREE.CircleGeometry(11.5, 40),
+      new THREE.MeshBasicMaterial({ color: 0x2B3A55, transparent: true, opacity: 0.1 })
+    );
+    shade.rotation.x = -Math.PI / 2;
+    shade.scale.set(1, 1.15, 1);
+    shade.position.y = groundY + 0.02;
+    scene.add(shade);
+    drone = new THREE.Group();
+    scene.add(drone);
+    await buildDrone();
+    resize();
+    window.addEventListener("resize", resize);
+    if (window.ResizeObserver) new ResizeObserver(resize).observe($("stage"));
+    bind();
+    buildDock();
+    refresh();
+    animate();
+  }
+
+  function resize() {
+    var stage = $("stage");
+    var w = stage.clientWidth || 800;
+    var h = stage.clientHeight || 480;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / Math.max(h, 1);
+    camera.updateProjectionMatrix();
+  }
+  function lerpAngle(a, b, t) {
+    var d = b - a;
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    return a + d * t;
+  }
+  function copyCam(dst, src) {
+    dst.theta = src.theta;
+    dst.phi = src.phi;
+    dst.radius = src.radius;
+  }
+  function setCamGoal(preset, opt) {
+    opt = opt || {};
+    if (preset.theta != null) viewGoal.theta = preset.theta;
+    if (preset.phi != null) viewGoal.phi = preset.phi;
+    if (preset.radius != null) viewGoal.radius = preset.radius;
+    if (opt.deltaRadius) viewGoal.radius += opt.deltaRadius;
+    if (opt.deltaPhi) viewGoal.phi += opt.deltaPhi;
+    if (opt.deltaTheta) viewGoal.theta += opt.deltaTheta;
+  }
+  function syncCameraForState() {
+    if (state.layer === "compare") { setCamGoal(CAM.iso); return; }
+    if (state.layer === "parts" || state.layer === "atlas") {
+      var base = CAM[state.system] || CAM.iso;
+      setCamGoal(base, { deltaRadius: CAM.parts.dRadius, deltaPhi: CAM.parts.dPhi });
+      if (state.part) nudgeCameraForPart(state.part);
+      return;
+    }
+    if (state.system) setCamGoal(CAM[state.system] || CAM.iso);
+    else setCamGoal(CAM.iso);
+  }
+  function nudgeCameraForPart(partId) {
+    var n = {
+      shell: { deltaTheta: 0.08, deltaPhi: 0.06, deltaRadius: -2 },
+      arms: { deltaTheta: 0.12, deltaPhi: -0.05, deltaRadius: -3 },
+      gear: { deltaTheta: -0.15, deltaPhi: 0.12, deltaRadius: -4 },
+      battery: { deltaTheta: 0.2, deltaPhi: 0.08, deltaRadius: -5 },
+      esc: { deltaTheta: 0.25, deltaPhi: 0.02, deltaRadius: -4 },
+      motors: { deltaTheta: 0.35, deltaPhi: -0.06, deltaRadius: -3 },
+      props: { deltaTheta: 0.28, deltaPhi: -0.1, deltaRadius: -2 },
+      fc: { deltaTheta: 0.05, deltaPhi: -0.12, deltaRadius: -4 },
+      gps: { deltaTheta: 0.1, deltaPhi: -0.18, deltaRadius: -3 },
+      camera: { deltaTheta: -0.05, deltaPhi: 0.04, deltaRadius: -5 },
+      imu: { deltaTheta: 0.05, deltaPhi: -0.1, deltaRadius: -4 },
+      baro: { deltaTheta: 0.05, deltaPhi: -0.1, deltaRadius: -4 },
+      mag: { deltaTheta: 0.05, deltaPhi: -0.1, deltaRadius: -4 }
+    };
+    if (n[partId]) setCamGoal({}, n[partId]);
+  }
+  function canSlowOrbit() {
+    if (drag) return false;
+    if (state.layer !== "whole" || state.system) return false;
+    if (!$("panel").classList.contains("hidden")) return false;
+    if (!autoOrbit || userPausedOrbit) return false;
+    return true;
+  }
+  function updateCamera(dt) {
+    if (canSlowOrbit()) viewGoal.theta += ORBIT_SPEED * (dt / 16.67);
+    var k = 1 - Math.exp(-dt / camSmoothTau);
+    view.theta = lerpAngle(view.theta, viewGoal.theta, k);
+    view.phi += (viewGoal.phi - view.phi) * k;
+    view.radius += (viewGoal.radius - view.radius) * k;
+    var sp = Math.sin(view.phi);
+    var fit = camera.aspect < 1 ? Math.min(1.82, 1.02 / Math.max(camera.aspect, 0.55)) : 1;
+    var radius = view.radius * fit;
+    camera.position.set(
+      lookAt.x + radius * sp * Math.sin(view.theta),
+      lookAt.y + radius * Math.cos(view.phi),
+      lookAt.z + radius * sp * Math.cos(view.theta)
+    );
+    camera.lookAt(lookAt);
+  }
+  function setView(name) {
+    var preset = CAM[name] || CAM.iso;
+    setCamGoal(preset);
+    document.querySelectorAll("[data-view]").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-view") === name);
+    });
+  }
+  function animate(t) {
+    requestAnimationFrame(animate);
+    var now = t || performance.now();
+    var dt = Math.min(48, now - (lastFrame || now));
+    lastFrame = now;
+    var spinning = now < spinUntil;
+    props.forEach(function (p) { if (spinning) p.rotation.y += 0.18 * p.userData.spin; });
+    var g = goals();
+    var sys = sysById(state.system);
+    var color = sys ? sys.color : "#A56B00";
+    Object.keys(PARTS).forEach(function (id) {
+      var slot = PARTS[id];
+      slot.opacity += (g[id] - slot.opacity) * 0.16;
+      slot.group.visible = slot.opacity > 0.03;
+      paint(slot.group, slot.opacity, g[id] > 0.9);
+    });
+    axisGroup.visible = !!(sys && sys.id === "frame" && (state.part === "arms" || state.layer === "parts" && !state.part));
+    updateCamera(dt);
+    updateLabels();
+    renderer.render(scene, camera);
+  }
+
+  function pick(clientX, clientY) {
+    var rect = renderer.domElement.getBoundingClientRect();
+    var ndc = new THREE.Vector2(
+      ((clientX - rect.left) / rect.width) * 2 - 1,
+      -((clientY - rect.top) / rect.height) * 2 + 1
+    );
+    var ray = new THREE.Raycaster();
+    ray.setFromCamera(ndc, camera);
+    var hits = ray.intersectObjects(drone.children, true);
+    for (var i = 0; i < hits.length; i++) {
+      var obj = hits[i].object;
+      if (obj.userData && obj.userData.part && obj.material && obj.material.opacity > 0.3) return obj.userData.part;
+    }
+    return null;
+  }
+
+  function goWhole() {
+    stopSeq();
+    quiz.active = false;
+    state.layer = "whole";
+    state.system = null;
+    state.part = null;
+    if (!userPausedOrbit) {
+      autoOrbit = true;
+      $("btnSpinOrbit").classList.add("on");
+    }
+    syncCameraForState();
+    refresh();
+  }
+  function selectSystem(id, opt) {
+    opt = opt || {};
+    if (!opt.fromSeq) stopSeq();
+    quiz.active = false;
+    state.system = id;
+    state.part = null;
+    autoOrbit = false;
+    if (state.layer === "atlas" || state.layer === "compare") state.layer = "parts";
+    if (!opt.keepLayer && state.layer !== "parts") state.layer = "whole";
+    syncCameraForState();
+    refresh();
+  }
+  function enterParts(partId) {
+    stopSeq();
+    if (!state.system) return;
+    quiz.active = false;
+    state.layer = "parts";
+    state.part = partId || null;
+    autoOrbit = false;
+    $("btnSpinOrbit").classList.remove("on");
+    syncCameraForState();
+    refresh();
+  }
+  function selectPart(id) {
+    stopSeq();
+    quiz.active = false;
+    state.layer = "parts";
+    state.part = id;
+    autoOrbit = false;
+    $("btnSpinOrbit").classList.remove("on");
+    syncCameraForState();
+    refresh();
+  }
+  function openAtlas() {
+    if (!state.system) return;
+    state.layer = "atlas";
+    refresh();
+  }
+  function openCompare() {
+    stopSeq();
+    quiz.active = false;
+    state.layer = "compare";
+    autoOrbit = false;
+    syncCameraForState();
+    refresh();
+  }
+  function playSystems() {
+    stopSeq();
+    state.layer = "whole";
+    autoOrbit = false;
+    $("btnSpinOrbit").classList.remove("on");
+    var ids = ["frame", "power", "fc", "payload"];
+    var i = 0;
+    function step() {
+      selectSystem(ids[i], { fromSeq: true, keepLayer: true });
+      state.layer = "whole";
+      i += 1;
+      if (i < ids.length) seqTimer = setTimeout(step, 1800);
+      else seqTimer = setTimeout(goWhole, 1800);
+    }
+    step();
+  }
+  function playChain() {
+    stopSeq();
+    state.system = "power";
+    state.layer = "parts";
+    autoOrbit = false;
+    $("btnSpinOrbit").classList.remove("on");
+    var ids = ["battery", "esc", "motors", "props"];
+    var i = 0;
+    function step() {
+      state.part = ids[i];
+      syncCameraForState();
+      refresh();
+      i += 1;
+      if (i < ids.length) seqTimer = setTimeout(step, 1600);
+    }
+    step();
+  }
+  function spinProps() { spinUntil = performance.now() + 4200; }
+
+  function poseQuizQuestion() {
+    var q = QUESTIONS[quiz.index];
+    state.layer = "whole";
+    state.system = q ? q.system : null;
+    state.part = null;
+    autoOrbit = false;
+    $("btnSpinOrbit").classList.remove("on");
+    setView(q && (q.part === "imu" || q.part === "gps") ? "top" : "iso");
+    refresh();
+  }
+  function startQuiz() {
+    stopSeq();
+    quiz = { active: true, index: 0, answered: false, correct: 0, attempts: 0, picks: [] };
+    poseQuizQuestion();
+  }
+  function answerQuiz(systemId, partId) {
+    if (!quiz.active || quiz.answered) return;
+    var q = QUESTIONS[quiz.index];
+    quiz.attempts += 1;
+    quiz.picks.push({ index: quiz.index, system: systemId, part: partId });
+    quiz.answered = systemId === q.system && partId === q.part;
+    if (quiz.answered) quiz.correct += 1;
+    refresh();
+  }
+  function nextQuiz() {
+    if (!quiz.answered) return;
+    if (quiz.index >= QUESTIONS.length - 1) {
+      quiz.index += 1;
+      state.system = null;
+      refresh();
+      return;
+    }
+    quiz.index += 1;
+    quiz.answered = false;
+    quiz.attempts = 0;
+    poseQuizQuestion();
+  }
+
+  function bannerText() {
+    var sys = sysById(state.system);
+    if (quiz.active) {
+      if (quiz.index >= QUESTIONS.length) return "六题完成。可以返回整机，或重新挑战。";
+      return quiz.answered ? "认对了。看一句解释，再进入下一题。" : "先不看右侧名称，直接点击三维模型作答。";
+    }
+    if (state.layer === "compare") return "同一类多旋翼，机架会因任务改形状。看完回到整机，主角还是这一架。";
+    if (state.layer === "atlas") return (sys ? sys.name : "") + "的实物举例。照片不是这架模型的原厂件。";
+    if (state.layer === "parts" && sys) {
+      var p = partById(sys, state.part);
+      if (p) return p.note;
+      if (sys.id === "frame") return "轴距是对角电机轴线的距离。红线只在认机臂时出现。";
+      if (sys.id === "power") return "顺着电池 → 电调 → 电机 → 螺旋桨看。零件没有被拆离原来的位置。";
+      if (sys.id === "fc") return "壳变淡，是为了看见里面的飞控板。板还在机身中心，没有被拿出来。";
+      return "云台在机腹前方。感知类和作业类的其他例子在实物图谱里，不往这架飞机上硬加。";
+    }
+    if (sys) return sys.lead + " 单击只高亮；要看零件，按「进入拆解」。";
+    return "Cesium Drone 真机网格 · Ed Mackey · CC BY 4.0。点下面四个系统查看结构关系。";
+  }
+
+  function refresh() {
+    var sys = sysById(state.system);
+    $("banner").textContent = bannerText();
+    $("btnQuiz").classList.toggle("on", quiz.active);
+    $("btnQuiz").textContent = quiz.active ? "退出提问" : "课堂提问";
+    $("btnHome").hidden = quiz.active ? quiz.index >= QUESTIONS.length : state.layer === "whole" && !state.system;
+    $("enterFloat").hidden = quiz.active || !(state.layer === "whole" && sys);
+    document.querySelectorAll("#path button").forEach(function (b) {
+      var go = b.getAttribute("data-go");
+      var on = (go === "whole" && state.layer === "whole" && !state.system)
+        || (go === "systems" && state.layer === "whole" && !!state.system)
+        || (go === "parts" && (state.layer === "parts" || state.layer === "atlas"))
+        || (go === "compare" && state.layer === "compare");
+      b.classList.toggle("on", on);
+    });
+    document.querySelectorAll("#dock button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-sys") === state.system);
+    });
+    var panel = $("panel");
+    var show = quiz.active || !!(sys || state.layer === "compare");
+    panel.classList.toggle("hidden", !show);
+    panel.classList.toggle("wide", state.layer === "atlas" || state.layer === "compare");
+    panel.innerHTML = "";
+    if (!show) return;
+    if (quiz.active) renderQuiz(panel);
+    else if (state.layer === "compare") renderCompare(panel);
+    else if (state.layer === "atlas") renderAtlas(panel, sys);
+    else renderSystem(panel, sys);
+  }
+
+  function renderQuiz(panel) {
+    var done = quiz.index >= QUESTIONS.length;
+    panel.appendChild(el("div", "panel-kicker", "课堂提问 · 直接点模型"));
+    panel.appendChild(el("h2", "", done ? "挑战完成" : "第 " + (quiz.index + 1) + " 题"));
+    var progress = el("div", "quiz-progress");
+    QUESTIONS.forEach(function (_, i) {
+      var mark = el("i", i < quiz.index || done ? "done" : i === quiz.index ? "now" : "");
+      progress.appendChild(mark);
+    });
+    panel.appendChild(progress);
+    if (done) {
+      panel.appendChild(el("div", "quiz-score", quiz.correct + " / " + QUESTIONS.length));
+      panel.appendChild(el("p", "lead", quiz.correct === QUESTIONS.length ? "六个关键位置都认准了。现在能指出零件，也能说出它和谁相连。" : "已经完成一轮。回到整机再看一遍，或重新挑战。"));
+    } else {
+      var q = QUESTIONS[quiz.index];
+      panel.appendChild(el("p", "lead", q.prompt));
+      if (quiz.attempts > 0 && !quiz.answered) {
+        panel.appendChild(el("div", "quiz-answer no", "这次没有点中。拖动模型换个角度，再点一次。"));
+      }
+      if (quiz.answered) panel.appendChild(el("div", "quiz-answer ok", "认对了：" + q.why));
+    }
+    var actions = el("div", "actions");
+    if (!done && quiz.answered) {
+      var next = el("button", "", quiz.index === QUESTIONS.length - 1 ? "查看结果" : "下一题");
+      next.type = "button";
+      next.addEventListener("click", nextQuiz);
+      actions.appendChild(next);
+    }
+    if (done) {
+      var again = el("button", "", "重新挑战");
+      again.type = "button";
+      again.addEventListener("click", startQuiz);
+      actions.appendChild(again);
+    }
+    var back = el("button", "ghost", "返回整机");
+    back.type = "button";
+    back.addEventListener("click", goWhole);
+    actions.appendChild(back);
+    panel.appendChild(actions);
+    panel.appendChild(el("div", "note", done ? "本页只在本机即时判定，不保存或上传成绩。" : "答错可继续尝试；答对后显示结构解释。"));
+  }
+
+  function renderSystem(panel, sys) {
+    panel.appendChild(el("div", "panel-kicker", state.layer === "parts" ? "认零件" : "四大系统"));
+    panel.appendChild(el("h2", "", sys.name));
+    panel.appendChild(el("p", "lead", state.layer === "parts" ? sys.why : sys.lead));
+    var list = el("div", "part-list");
+    sys.parts.forEach(function (p) {
+      var b = el("button", state.part === p.id ? "on" : "");
+      b.type = "button";
+      b.appendChild(el("strong", "", p.name));
+      b.appendChild(el("span", "", p.note));
+      b.addEventListener("click", function () { selectPart(p.id); });
+      list.appendChild(b);
+    });
+    panel.appendChild(list);
+    var actions = el("div", "actions");
+    if (state.layer === "whole") {
+      var enter = el("button", "", "进入拆解");
+      enter.type = "button";
+      enter.addEventListener("click", function () { enterParts(null); });
+      actions.appendChild(enter);
+    } else {
+      var atlas = el("button", "", "看实物图谱");
+      atlas.type = "button";
+      atlas.addEventListener("click", openAtlas);
+      actions.appendChild(atlas);
+      if (sys.id === "power") {
+        var chain = el("button", "ghost", "走一遍动力链");
+        chain.type = "button";
+        chain.addEventListener("click", playChain);
+        actions.appendChild(chain);
+        var spin = el("button", "ghost", "桨转一下");
+        spin.type = "button";
+        spin.addEventListener("click", function () { selectPart("props"); spinProps(); });
+        actions.appendChild(spin);
+      }
+      if (sys.id === "frame") {
+        var cmp = el("button", "ghost", "为什么机架长得不一样");
+        cmp.type = "button";
+        cmp.addEventListener("click", openCompare);
+        actions.appendChild(cmp);
+      }
+      if (sys.id === "payload") {
+        var more = el("button", "ghost", "感知类 / 作业类");
+        more.type = "button";
+        more.addEventListener("click", openAtlas);
+        actions.appendChild(more);
+      }
+    }
+    var back = el("button", "ghost", "返回整机");
+    back.type = "button";
+    back.addEventListener("click", goWhole);
+    actions.appendChild(back);
+    panel.appendChild(actions);
+    panel.appendChild(el("div", "note", sys.why));
+  }
+
+  function renderAtlas(panel, sys) {
+    panel.appendChild(el("div", "panel-kicker", "实物图谱"));
+    panel.appendChild(el("h2", "", sys.name));
+    panel.appendChild(el("p", "lead", "只看少数典型样子。不在这里讲匹配计算和控制算法。"));
+    var box = el("div", "cards");
+    var cards = atlasCards(sys.id);
+    cards.forEach(function (c) { box.appendChild(c.img ? photoCard(c.img, c.title, c.text) : textCard(c.title, c.text)); });
+    panel.appendChild(box);
+    var actions = el("div", "actions");
+    var backParts = el("button", "", "返回零件");
+    backParts.type = "button";
+    backParts.addEventListener("click", function () { state.layer = "parts"; refresh(); });
+    var back = el("button", "ghost", "返回整机");
+    back.type = "button";
+    back.addEventListener("click", goWhole);
+    actions.appendChild(backParts);
+    actions.appendChild(back);
+    panel.appendChild(actions);
+  }
+  function atlasCards(id) {
+    if (id === "frame") return [
+      { img: PHOTOS.phantom, title: "有壳的固定机臂", text: "精灵一类把机臂和中心板包在壳里，远看是一架完整的飞机。课堂先认这个外形。" },
+      { img: PHOTOS.fpv, title: "壳很少的穿越机", text: "机臂、电机、桨和贴在臂上的电调都露在外面。它仍是四旋翼，只是机架为减轻重量把壳拿掉了。这不是精灵的拆解图。" }
+    ];
+    if (id === "power") return [
+      { img: PHOTOS.prop, title: "螺旋桨", text: "先认两叶桨的外形。三叶桨、折叠桨是另一种样子，这里不计算该配哪一号。" },
+      { img: PHOTOS.motor, title: "电机与桨装在一起", text: "电机在桨下面。无刷电机的内部结构，结构与系统课再打开。" },
+      { img: PHOTOS.motorOpen, title: "电机拆开长什么样", text: "只建立一个印象：它是一叠零件，不是一根铁棍。不讲电磁。" },
+      { img: PHOTOS.esc, title: "电调", text: "一块把电池的直流变成电机三相电的小板。整机里它经常看不见。" },
+      { img: PHOTOS.battery, title: "电池", text: "这是航模上常见的锂电池组，不是精灵的智能电池壳。认的是「电能仓库」，不是同一个型号。" }
+    ];
+    if (id === "fc") return [
+      { img: PHOTOS.fc, title: "飞控板 + 独立 GPS", text: "红板是飞控，旁边白方块是单独的卫星模块。陀螺仪和加速度计通常在同一颗 IMU 里；这张照片分不清芯片，所以不在图上圈脚位。" }
+    ];
+    return [
+      { img: PHOTOS.gimbal, title: "感知类：云台相机", text: "相机装在能转动的云台上。这是另一家机器的云台，用来认结构，不是精灵原厂件。" },
+      { img: PHOTOS.thermal, title: "感知类：Mavic 3T 热成像", text: "前下方云台并排装着可见光与热成像传感器。它感知的是热辐射差异，不是把可见光照片简单换个颜色。" },
+      { img: PHOTOS.agriSpray, title: "作业类：植保喷洒", text: "稻田上空的植保机正在喷洒。认这类载荷时看机服药箱、管路和喷头，不把喷出的雾当成螺旋桨气流。" },
+      { img: PHOTOS.delivery, title: "作业类：机腹货箱运输", text: "Flytrex 运输无人机把货箱放在机腹、靠近重心。这张照片是货箱运输，不是绳吊；抛投与绳吊需要各自的释放或吊挂机构。" }
+    ];
+  }
+  function renderCompare(panel) {
+    panel.appendChild(el("div", "panel-kicker", "机型对照"));
+    panel.appendChild(el("h2", "", "为什么长得不一样"));
+    panel.appendChild(el("p", "lead", "主线仍是这架固定机臂四旋翼。下面每一种，只回答一个问题：任务变了，机架为什么要改。"));
+    var box = el("div", "cards");
+    [
+      [PHOTOS.phantom, "固定机臂", "精灵这一类。结构好认，桨盘稳定，代价是收不进小包。本页主角就是这种。"],
+      [PHOTOS.mini, "折叠机臂", "Mini 把机臂折到机身旁边，为的是进包。认的时候先找铰链，别把它看成断了的机臂。"],
+      [PHOTOS.mavic, "同样是折叠", "御也用折叠机臂，云台收在机身前方。和固定机臂比，多出来的是关节，不是新的升力原理。"],
+      [PHOTOS.fpv, "裸架四旋翼", "穿越机把壳减掉，电调常常贴在机臂上。为的是轻、好修，不是为了看起来像消费级航拍机。"],
+      [PHOTOS.inspire, "大疆“悟”：机臂会抬起来", "悟系列起飞后把机臂抬高，给前方的电影相机让出视线。变的是机臂角度，不是 Mavic 的收纳折叠。"],
+      [PHOTOS.agri, "植保：药箱与喷洒机构", "大载重植保机要把药箱、管路和喷头布置在机腹，并为这些作业载荷留出空间。常见多机臂布局也服务于载重与冗余。"],
+      [PHOTOS.delivery, "吊运与运输：给载荷让位置", "这架 Flytrex 运输无人机把货箱放在机腹。载荷应尽量靠近重心；若是绳吊，还要另看吊点和摆动空间。"]
+    ].forEach(function (row) {
+      box.appendChild(row[0] ? photoCard(row[0], row[1], row[2]) : textCard(row[1], row[2]));
+    });
+    box.appendChild(motionCard("fold", "折叠机臂：从展开到收纳", "俯视图。机臂绕铰链转到机身两侧，缩小收纳包络；动画只说明运动关系，不代表某一型号的精确铰链角度。"));
+    box.appendChild(motionCard("inspire", "大疆“悟”系列：机臂抬升变形", "侧视原理图。起飞后两侧机臂抬升，带动动力与支撑结构上移，为前下方相机让出视野；它不是 Mavic 那种机臂折叠收纳。"));
+    panel.appendChild(box);
+    var actions = el("div", "actions");
+    var back = el("button", "", "返回整机");
+    back.type = "button";
+    back.addEventListener("click", goWhole);
+    actions.appendChild(back);
+    panel.appendChild(actions);
+  }
+  function photoCard(src, title, text) {
+    var card = el("article", "card");
+    var open = el("button", "photo-open");
+    open.type = "button";
+    open.title = "查看完整图片";
+    open.setAttribute("aria-label", "查看完整图片：" + title);
+    var img = document.createElement("img");
+    img.src = src;
+    img.alt = title;
+    open.appendChild(img);
+    open.addEventListener("click", function () { openPhoto(src, title); });
+    card.appendChild(open);
+    card.appendChild(el("h3", "", title));
+    card.appendChild(el("p", "", text));
+    return card;
+  }
+  var photoScale = 1;
+  var photoReturnFocus = null;
+  function setPhotoScale(next) {
+    photoScale = Math.max(0.6, Math.min(4, next));
+    $("photoFull").style.transform = "scale(" + photoScale + ")";
+    $("photoZoomReset").textContent = Math.round(photoScale * 100) + "%";
+  }
+  function openPhoto(src, title) {
+    photoReturnFocus = document.activeElement;
+    $("photoFull").src = src;
+    $("photoFull").alt = title;
+    $("photoCaption").textContent = title;
+    $("photoLightbox").hidden = false;
+    document.body.classList.add("photo-open-lock");
+    setPhotoScale(1);
+    $("photoClose").focus();
+  }
+  function closePhoto() {
+    $("photoLightbox").hidden = true;
+    document.body.classList.remove("photo-open-lock");
+    if (photoReturnFocus && photoReturnFocus.focus) photoReturnFocus.focus();
+  }
+  function textCard(title, text) {
+    var card = el("article", "card plain");
+    card.appendChild(el("h3", "", title));
+    card.appendChild(el("p", "", text));
+    return card;
+  }
+  function motionCard(kind, title, text) {
+    var card = el("article", "card motion-card");
+    var head = el("div", "motion-head");
+    head.appendChild(el("h3", "", title));
+    var toggle = el("button", "motion-toggle", "❚❚");
+    toggle.type = "button";
+    toggle.title = "暂停动画";
+    toggle.setAttribute("aria-label", "暂停动画");
+    head.appendChild(toggle);
+    card.appendChild(head);
+    var drawing = kind === "fold" ? `
+      <svg viewBox="0 0 360 260" role="img" aria-label="四旋翼机臂折叠原理动画">
+        <g stroke="#2B3A55" stroke-width="12" stroke-linecap="round" fill="#F5F1E8">
+          <g class="animated fold-fl"><path d="M150 80L70 35"/><circle cx="70" cy="35" r="23" stroke-width="4"/><circle cx="70" cy="35" r="6" fill="#C0392B" stroke="none"/></g>
+          <g class="animated fold-fr"><path d="M210 80L290 35"/><circle cx="290" cy="35" r="23" stroke-width="4"/><circle cx="290" cy="35" r="6" fill="#2E8B57" stroke="none"/></g>
+          <g class="animated fold-bl"><path d="M150 145L70 185"/><circle cx="70" cy="185" r="23" stroke-width="4"/><circle cx="70" cy="185" r="6" fill="#2E8B57" stroke="none"/></g>
+          <g class="animated fold-br"><path d="M210 145L290 185"/><circle cx="290" cy="185" r="23" stroke-width="4"/><circle cx="290" cy="185" r="6" fill="#C0392B" stroke="none"/></g>
+        </g>
+        <rect x="143" y="61" width="74" height="105" rx="28" fill="#FFFFFF" stroke="#2B3A55" stroke-width="3"/>
+        <path d="M155 105H205" stroke="#C0392B" stroke-width="4"/>
+        <g fill="#A56B00"><circle cx="150" cy="80" r="5"/><circle cx="210" cy="80" r="5"/><circle cx="150" cy="145" r="5"/><circle cx="210" cy="145" r="5"/></g>
+        <text x="180" y="246" text-anchor="middle" font-size="13" fill="#5C6B82">前臂后收 · 后臂前收 · 铰链转动</text>
+      </svg>` : `
+      <svg viewBox="0 0 360 220" role="img" aria-label="大疆悟系列机臂抬升原理动画">
+        <path d="M30 183H330" stroke="#C8C0B4" stroke-width="2"/>
+        <g stroke="#2B3A55" stroke-width="10" stroke-linecap="round" fill="#F5F1E8">
+          <g class="animated inspire-left"><path d="M150 100L55 124"/><path d="M55 54V150" stroke-width="5"/><ellipse cx="55" cy="54" rx="42" ry="7" stroke-width="3"/></g>
+          <g class="animated inspire-right"><path d="M210 100L305 124"/><path d="M305 54V150" stroke-width="5"/><ellipse cx="305" cy="54" rx="42" ry="7" stroke-width="3"/></g>
+        </g>
+        <rect x="139" y="79" width="82" height="46" rx="17" fill="#FFFFFF" stroke="#2B3A55" stroke-width="3"/>
+        <path d="M180 125V145" stroke="#2B3A55" stroke-width="5"/>
+        <rect x="163" y="143" width="34" height="25" rx="6" fill="#2B3A55"/>
+        <circle cx="180" cy="155" r="7" fill="#8DB2C5"/>
+        <path d="M155 169H205" stroke="#C0392B" stroke-width="3" stroke-dasharray="4 4"/>
+        <text x="180" y="202" text-anchor="middle" font-size="13" fill="#5C6B82">机臂抬升 · 相机视野让开</text>
+      </svg>`;
+    var svgBox = el("div");
+    svgBox.innerHTML = drawing;
+    card.appendChild(svgBox.firstElementChild);
+    card.appendChild(el("p", "", text));
+    toggle.addEventListener("click", function () {
+      var paused = card.classList.toggle("paused");
+      toggle.textContent = paused ? "▶" : "❚❚";
+      toggle.title = paused ? "播放动画" : "暂停动画";
+      toggle.setAttribute("aria-label", toggle.title);
+    });
+    return card;
+  }
+
+  function buildDock() {
+    var dock = $("dock");
+    SYSTEMS.forEach(function (s) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("data-sys", s.id);
+      b.innerHTML = "<span class='nm'><i></i>" + s.name + "</span><span class='sub'>" + s.sub + "</span>";
+      b.querySelector("i").style.background = s.color;
+      b.addEventListener("click", function () {
+        if (state.layer === "parts" || state.layer === "atlas") {
+          state.system = s.id;
+          state.part = null;
+          state.layer = "parts";
+          stopSeq();
+          refresh();
+        } else selectSystem(s.id);
+      });
+      b.addEventListener("dblclick", function (e) {
+        e.preventDefault();
+        state.system = s.id;
+        enterParts(null);
+      });
+      dock.appendChild(b);
+    });
+  }
+
+  function bind() {
+    $("photoClose").addEventListener("click", closePhoto);
+    $("photoLightbox").addEventListener("click", function (e) { if (e.target === $("photoLightbox") || e.target === $("photoScroll")) closePhoto(); });
+    $("photoZoomOut").addEventListener("click", function () { setPhotoScale(photoScale - 0.25); });
+    $("photoZoomIn").addEventListener("click", function () { setPhotoScale(photoScale + 0.25); });
+    $("photoZoomReset").addEventListener("click", function () { setPhotoScale(1); });
+    $("btnHome").addEventListener("click", goWhole);
+    $("btnQuiz").addEventListener("click", function () { quiz.active ? goWhole() : startQuiz(); });
+    $("btnLabels").addEventListener("click", function () {
+      labelsOn = !labelsOn;
+      $("btnLabels").classList.toggle("on", labelsOn);
+      $("btnLabels").setAttribute("aria-pressed", String(labelsOn));
+    });
+    $("btnEnter").addEventListener("click", function () { enterParts(null); });
+    $("btnSpinOrbit").addEventListener("click", function () {
+      autoOrbit = !autoOrbit;
+      userPausedOrbit = !autoOrbit;
+      $("btnSpinOrbit").classList.toggle("on", autoOrbit);
+      if (autoOrbit) copyCam(viewGoal, view);
+    });
+    document.querySelectorAll("#path button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var go = b.getAttribute("data-go");
+        if (go === "whole") goWhole();
+        else if (go === "systems") playSystems();
+        else if (go === "parts") {
+          if (!state.system) { $("banner").textContent = "先点一个系统，再进入零件。"; return; }
+          enterParts(state.part);
+        } else openCompare();
+      });
+    });
+    document.querySelectorAll("[data-view]").forEach(function (b) {
+      b.addEventListener("click", function () { setView(b.getAttribute("data-view")); });
+    });
+    var canvas = $("c3d");
+    canvas.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0) return;
+      stopSeq();
+      autoOrbit = false;
+      $("btnSpinOrbit").classList.remove("on");
+      drag = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId };
+      canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener("pointermove", function (e) {
+      if (!drag || drag.id !== e.pointerId) return;
+      var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (Math.hypot(dx, dy) > 4) drag.moved = true;
+      drag.x = e.clientX; drag.y = e.clientY;
+      view.theta -= dx * 0.008;
+      view.phi = Math.max(0.35, Math.min(1.45, view.phi + dy * 0.005));
+      copyCam(viewGoal, view);
+    });
+    canvas.addEventListener("pointerup", function (e) {
+      if (!drag || drag.id !== e.pointerId) return;
+      var moved = drag.moved;
+      drag = null;
+      if (moved) return;
+      var meshId = pick(e.clientX, e.clientY);
+      if (!meshId) return;
+      var own = ownerOfMesh(meshId);
+      if (!own) return;
+      if (quiz.active) { answerQuiz(own.system, own.part); return; }
+      var now = performance.now();
+      if (lastClick.id === meshId && now - lastClick.t < 420) {
+        state.system = own.system;
+        enterParts(own.part);
+      } else if (state.layer === "parts" || state.layer === "atlas") {
+        state.system = own.system;
+        state.layer = "parts";
+        selectPart(own.part);
+      } else {
+        selectSystem(own.system);
+      }
+      lastClick = { id: meshId, t: now };
+    });
+    canvas.addEventListener("wheel", function (e) {
+      e.preventDefault();
+      stopSeq();
+      autoOrbit = false;
+      $("btnSpinOrbit").classList.remove("on");
+      view.radius = Math.max(36, Math.min(120, view.radius * (e.deltaY > 0 ? 1.08 : 0.92)));
+      viewGoal.radius = view.radius;
+    }, { passive: false });
+    var panel = $("panel");
+    panel.addEventListener("pointerenter", function () { autoOrbit = false; });
+    panel.addEventListener("scroll", function () { autoOrbit = false; });
+    document.addEventListener("keydown", function (e) {
+      if (!$("photoLightbox").hidden) {
+        if (e.key === "Escape") closePhoto();
+        return;
+      }
+      if (e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+      if (e.key === "Escape") { goWhole(); return; }
+      if (quiz.active || state.layer === "atlas" || state.layer === "compare") return;
+      var i = SYSTEMS.findIndex(function (s) { return s.id === state.system; });
+      if (e.key === "ArrowRight") selectSystem(SYSTEMS[(i + 1 + SYSTEMS.length) % SYSTEMS.length].id);
+      if (e.key === "ArrowLeft") { if (i <= 0) goWhole(); else selectSystem(SYSTEMS[i - 1].id); }
+    });
+  }
+
+  window.__mr3d = {
+    get state() { return { layer: state.layer, system: state.system, part: state.part }; },
+    get quizState() { return JSON.parse(JSON.stringify(quiz)); },
+    goWhole: goWhole,
+    selectSystem: selectSystem,
+    enterParts: enterParts,
+    selectPart: selectPart,
+    openAtlas: openAtlas,
+    openCompare: openCompare,
+    startQuiz: startQuiz,
+    answerQuiz: answerQuiz,
+    nextQuiz: nextQuiz,
+    frameStats: function () {
+      renderer.render(scene, camera);
+      var gl = renderer.getContext();
+      var w = renderer.domElement.width, h = renderer.domElement.height;
+      var pixels = new Uint8Array(w * h * 4);
+      gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      var opaque = 0, nonPaper = 0, colors = {};
+      for (var i = 0; i < pixels.length; i += 16) {
+        var r = pixels[i], g = pixels[i + 1], b = pixels[i + 2], a = pixels[i + 3];
+        if (a > 0) opaque += 1;
+        if (Math.abs(r - 245) + Math.abs(g - 241) + Math.abs(b - 232) > 35) nonPaper += 1;
+        colors[(r >> 4) + "," + (g >> 4) + "," + (b >> 4)] = 1;
+      }
+      return { width: w, height: h, opaqueSamples: opaque, nonPaperSamples: nonPaper, colorBins: Object.keys(colors).length };
+    },
+    sample: function () {
+      var out = {};
+      Object.keys(PARTS).forEach(function (id) {
+        var op = null;
+        var tr = null;
+        PARTS[id].group.traverse(function (o) {
+          if (o.isMesh && o.material && op == null) {
+            op = o.material.opacity;
+            tr = o.material.transparent;
+          }
+        });
+        out[id] = { slot: Math.round(PARTS[id].opacity * 100) / 100, mat: op, tr: tr };
+      });
+      return out;
+    }
+  };
+
+  init().catch(function (error) {
+    console.error("Cesium Drone GLB load failed", error);
+    $("banner").textContent = "真机 GLB 加载失败。请用同夹的「打开三维-本地服务.ps1」经 localhost 打开，不要直接双击 HTML。";
+    window.__mrModelInfo = { source: "error", message: String(error && error.message || error) };
+  });
+})();
+</script>
+</body>
+</html>
