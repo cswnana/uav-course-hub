@@ -1,13 +1,28 @@
-﻿{
+{
   "title": "无人机导论与飞行法规 · 三维互动（在线）",
   "groups": [
     {
       "id": "m2-3d",
       "name": "模块二 · 结构三维",
       "items": [
-        {"id": "fw3d", "label": "固定翼三维", "note": "运12 / FP-98 / 翼龙", "path": "fw/"},
-        {"id": "mr3d", "label": "多旋翼三维", "note": "Cesium 真机网格", "path": "mr/"},
-        {"id": "dji3d", "label": "大疆 Phantom 4 三维", "note": "外观网格对照", "path": "dji/"}
+        {
+          "id": "fw3d",
+          "label": "固定翼三维",
+          "note": "运12 / FP-98 / 翼龙",
+          "path": "fw/index.html"
+        },
+        {
+          "id": "mr3d",
+          "label": "多旋翼三维",
+          "note": "Cesium 真机网格",
+          "path": "mr/index.html"
+        },
+        {
+          "id": "dji3d",
+          "label": "大疆 Phantom 4 三维",
+          "note": "外观网格对照",
+          "path": "dji/index.html"
+        }
       ]
     }
   ]
